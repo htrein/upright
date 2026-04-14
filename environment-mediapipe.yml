@@ -1,0 +1,18 @@
+name: mediapipe
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - opencv
+  - protobuf
+  - pip:
+    - mediapipe
+    - absl-py
+    - matplotlib
+
+# Note: On some Linux systems 'pip install mediapipe' may require extra system
+# packages or a specific Python version. If pip wheel is not available, please
+# consult MediaPipe's official docs or use a Docker image as an alternative.

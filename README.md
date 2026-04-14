@@ -85,6 +85,51 @@ variáveis `CUDA_HOME`, `PATH` e `LD_LIBRARY_PATH` apontando para
 `/usr/local/cuda`. Se o seu CUDA está em outro diretório, edite os scripts ou
 exporte as variáveis antes de executar.
 
+Baixar o arquivo de pesos usado pelo demo (`resnet18_baseline_att_224x224_A_epoch_249.pth`)
+---------------------------------------------------------------------------------
+
+O demo `trt_pose/tasks/human_pose/camera_demo.py` espera encontrar o arquivo de
+pesos `resnet18_baseline_att_224x224_A_epoch_249.pth` no diretório
+`trt_pose/tasks/human_pose/` (nome relativo). Se este arquivo não estiver
+presente no repositório, siga um destes métodos para obtê-lo:
+
+1) Usar o script fornecido (recomendado):
+
+```bash
+chmod +x scripts/download_weights.sh
+./scripts/download_weights.sh
+```
+
+O script baixa o arquivo do repositório público e o salva em
+`trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth`.
+
+2) Baixar manualmente com wget/curl:
+
+```bash
+mkdir -p trt_pose/tasks/human_pose
+wget -O trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth \
+  "https://raw.githubusercontent.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
+```
+
+ou com curl:
+
+```bash
+curl -L -o trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth \
+  "https://raw.githubusercontent.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
+```
+
+3) Verificação (opcional):
+
+Após o download, confirme que o arquivo existe e verifique o tamanho / checksum:
+
+```bash
+ls -lh trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth
+sha256sum trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth
+```
+
+Se preferir, posso adicionar um checksum oficial no README e bloquear o arquivo
+no repositório com LFS; diga se quer que eu faça isso.
+
 Permissões de câmera e vídeo em Linux
 - Certifique-se de que seu usuário é membro do grupo `video` ou execute o demo
   com permissões suficientes para acessar `/dev/video*`.

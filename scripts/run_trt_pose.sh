@@ -18,10 +18,12 @@ conda activate "$ENV_NAME"
 
 export CUDA_HOME=/usr/local/cuda
 export PATH=$CUDA_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-
 # Change to the trt_pose demo folder relative to repo root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:${LD_LIBRARY_PATH:-}
+export PYTHONPATH=$SCRIPT_DIR/trt_pose:${PYTHONPATH:-}
+
 DEMO_DIR="$SCRIPT_DIR/trt_pose/tasks/human_pose"
 echo "Changing to demo dir: $DEMO_DIR"
 cd "$DEMO_DIR"

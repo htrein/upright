@@ -8,9 +8,9 @@ set -euo pipefail
 DEST_PATH="${1:-trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth}"
 VERIFY="${2:-no}"
 
-URL="https://raw.githubusercontent.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
+URL="https://github.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/raw/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
 
-mkdir -p "$(dirname "$DEST_PATH")"https://github.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/blob/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth
+mkdir -p "$(dirname "$DEST_PATH")"
 
 echo "Baixando pesos para: $DEST_PATH"
 if command -v curl >/dev/null 2>&1; then

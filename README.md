@@ -68,7 +68,17 @@ pip3 install torch torchvision --extra-index-url https://download.pytorch.org/wh
 
 Após instalar, ative o ambiente e verifique com o snippet Python em "Verificações rápidas".
 
-3) Tornar os scripts executáveis e rodar os demos
+3) Compilar e instalar o trt_pose (necessário para os plugins C++)
+
+O `trt_pose` requer a compilação de extensões C++. Execute os comandos abaixo dentro do ambiente conda:
+
+```bash
+cd trt_pose
+pip install -e . --no-build-isolation
+cd ..
+```
+
+4) Tornar os scripts executáveis e rodar os demos
 
 ```bash
 chmod +x scripts/run_trt_pose.sh scripts/run_mediapipe.sh
@@ -108,14 +118,14 @@ O script baixa o arquivo do repositório público e o salva em
 ```bash
 mkdir -p trt_pose/tasks/human_pose
 wget -O trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth \
-  "https://raw.githubusercontent.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
+  "https://github.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/raw/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
 ```
 
 ou com curl:
 
 ```bash
 curl -L -o trt_pose/tasks/human_pose/resnet18_baseline_att_224x224_A_epoch_249.pth \
-  "https://raw.githubusercontent.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
+  "https://github.com/make2explore/Real-Time-Hand-Pose-Estimation-on-Jetson-Nano/raw/main/Pre-Trained%20Models/trt_pose/resnet18_baseline_att_224x224_A_epoch_249.pth"
 ```
 
 3) Verificação (opcional):
@@ -146,8 +156,9 @@ Checklist rápido (passo-a-passo)
    - `conda env create -f environment-trt_pose.yml`
    - `conda env create -f environment-mediapipe.yml`
 4. Ativar o ambiente e instalar o PyTorch compatível com sua CUDA (veja comandos acima).
-5. Dar permissão de execução aos scripts: `chmod +x scripts/*.sh`.
-6. Rodar: `./scripts/run_trt_pose.sh axis_monitor` ou `./scripts/run_mediapipe.sh mp_fix`.
+5. Compilar o `trt_pose`: `cd trt_pose && pip install -e . --no-build-isolation && cd ..`.
+6. Dar permissão de execução aos scripts: `chmod +x scripts/*.sh`.
+7. Rodar: `./scripts/run_trt_pose.sh axis_monitor` ou `./scripts/run_mediapipe.sh mp_fix`.
 
 Troubleshooting rápido
 - `conda activate` não funciona em scripts: execute `conda init bash` no shell

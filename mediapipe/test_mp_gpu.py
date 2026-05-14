@@ -5,9 +5,11 @@ import collections
 import numpy as np
 import tkinter as tk
 from tkinter import ttk, messagebox
+import time
+import os
 
-mp_pose = mp.solutions.pose
-mp_selfie = mp.solutions.selfie_segmentation
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 # ====== CONFIG ======
 VISIBILITY_THRESHOLD = 0.5 # Confiança mínima (0 a 1) para considerar a parte do corpo visível
@@ -39,7 +41,6 @@ _ema_state = {}
 _posture_history = collections.deque(maxlen=POSTURE_WINDOW)
 
 # ====== EMA (Média Móvel Exponencial) ======
-# Aplica um filtro aos valores dos ângulos para evitar tremulações abruptas das métricas na tela.
 def ema(key, value, alpha=EMA_ALPHA):
     prev = _ema_state.get(key, value)
     new = alpha * value + (1 - alpha) * prev
@@ -47,8 +48,6 @@ def ema(key, value, alpha=EMA_ALPHA):
     return new
 
 # ====== SCORE CONTÍNUO 0..1 ======
-# Converte o ângulo (desvio da postura ideal) em uma pontuação de 0.0 (péssimo) a 1.0 (perfeito).
-# Quanto mais distante do zero ou do ângulo calibrado, menor a pontuação.
 def angle_to_score(angle_deg, max_angle=45.0):
     x = max(0.0, min(angle_deg / max_angle, 1.0))
     return 1.0 - x
@@ -69,8 +68,6 @@ def score_to_color(score):
     return (b, g, r)
 
 # ====== ÂNGULOS ======
-# Calcula o ângulo em graus entre dois pontos em relação à linha horizontal da imagem.
-# Usado para saber se os ombros estão desnivelados.
 def angle_horizontal(p1, p2):
     dx = p2[0] - p1[0]
     dy = p1[1] - p2[1]
@@ -91,7 +88,7 @@ def draw_bar(img, x, y, w, h, frac, color):
 # ====== PRIVACIDADE via máscara de segmentação ======
 def apply_privacy_segmentation(frame, seg_mask, mode):
     mask = cv2.GaussianBlur(seg_mask, (21, 21), 0)
-    mask3 = mask[:, :, np.newaxis]   
+    mask3 = mask[:, :, np.newaxis]
 
     if mode == 'silhouette':
         bg = np.full_like(frame, SILHOUETTE_COLOR, dtype=np.uint8)
@@ -125,7 +122,6 @@ def show_config_window():
         rigidez = combo_rigidez.get()
         calibracao = combo_calibracao.get()
         
-        # Ajustes de Rigidez
         if rigidez == "Rigoroso":
             BAD_POSTURE_THRESHOLD = 0.60
             MAX_ANGLE_SHOULDER = 12.0
@@ -139,7 +135,6 @@ def show_config_window():
             MAX_ANGLE_SHOULDER = 20.0
             MAX_ANGLE_NECK = 24.0
 
-        # Ajuste de Calibração
         if calibracao == "Usar Padrão do Sistema":
             IS_CALIBRATED = True
         else: # Calibrar Manualmente
@@ -151,7 +146,7 @@ def show_config_window():
         tutorial_text = (
             "Tutorial de Ambientação - Upright\n\n"
             "Para o melhor funcionamento do sistema, siga estas dicas:\n\n"
-            "1. Distância da Tela: Mantenha-se a cerca de 40 a 60 cm da sua webcam.\n"
+            "1. Distância da Tela: Mantenha-se a cerca de 50 a 70 cm da sua webcam.\n"
             "2. Posição da Câmera: A câmera deve estar na altura dos seus olhos ou levemente acima.\n"
             "3. Enquadramento: Certifique-se de que seus ombros e rosto estejam claramente visíveis na câmera.\n"
             "4. Iluminação: Evite luz forte diretamente atrás de você (contra-luz) para não escurecer seu rosto.\n"
@@ -160,8 +155,8 @@ def show_config_window():
         messagebox.showinfo("Tutorial de Ambientação", tutorial_text)
 
     root = tk.Tk()
-    root.title("Configurações Iniciais - Upright")
-   
+    root.title("Configurações Iniciais - Upright GPU")
+    
     window_width = 380
     window_height = 200
     screen_width = root.winfo_screenwidth()
@@ -173,19 +168,16 @@ def show_config_window():
     frame = ttk.Frame(root, padding="20")
     frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-    # Rigidez
     ttk.Label(frame, text="Rigidez da Avaliação:").grid(column=0, row=0, sticky=tk.W, pady=5)
     combo_rigidez = ttk.Combobox(frame, values=["Relaxado", "Normal", "Rigoroso"], state="readonly")
     combo_rigidez.set("Normal")
     combo_rigidez.grid(column=1, row=0, sticky=tk.W, pady=5)
 
-    # Calibração
     ttk.Label(frame, text="Calibração Inicial:").grid(column=0, row=1, sticky=tk.W, pady=5)
     combo_calibracao = ttk.Combobox(frame, values=["Calibrar Manualmente", "Usar Padrão do Sistema"], state="readonly")
     combo_calibracao.set("Calibrar Manualmente")
     combo_calibracao.grid(column=1, row=1, sticky=tk.W, pady=5)
 
-    # Botões
     btn_frame = ttk.Frame(frame)
     btn_frame.grid(column=0, row=3, columnspan=2, pady=20)
     
@@ -195,7 +187,6 @@ def show_config_window():
     btn_start = ttk.Button(btn_frame, text="Iniciar Câmera", command=apply_settings)
     btn_start.grid(column=1, row=0, padx=5)
     
-    # Ajuste de layout
     for child in frame.winfo_children(): 
         child.grid_configure(padx=5)
         
@@ -206,78 +197,99 @@ show_config_window()
 
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-cv2.namedWindow("Upright Mediapipe", cv2.WINDOW_NORMAL)
+cv2.namedWindow("Upright Mediapipe GPU", cv2.WINDOW_NORMAL)
 
-with (
-    mp_pose.Pose(model_complexity=1, smooth_landmarks=True) as pose,
-    mp_selfie.SelfieSegmentation(model_selection=1) as segmenter
-):
+# Setup MediaPipe Tasks para GPU
+model_dir = os.path.join(os.path.dirname(__file__), 'models')
+pose_model_path = os.path.join(model_dir, 'pose_landmarker_full.task')
+seg_model_path = os.path.join(model_dir, 'selfie_segmenter.tflite')
+
+if not os.path.exists(pose_model_path) or not os.path.exists(seg_model_path):
+    print("Modelos nao encontrados! Rode o script scripts/download_mp_tasks.sh primeiro.")
+    exit(1)
+
+base_options_pose = python.BaseOptions(
+    model_asset_path=pose_model_path,
+    delegate=python.BaseOptions.Delegate.GPU)
+
+options_pose = vision.PoseLandmarkerOptions(
+    base_options=base_options_pose,
+    running_mode=vision.RunningMode.VIDEO,
+    output_segmentation_masks=False)
+
+base_options_seg = python.BaseOptions(
+    model_asset_path=seg_model_path,
+    delegate=python.BaseOptions.Delegate.GPU)
+
+options_seg = vision.ImageSegmenterOptions(
+    base_options=base_options_seg,
+    running_mode=vision.RunningMode.VIDEO,
+    output_confidence_masks=True,
+    output_category_mask=False)
+
+with vision.PoseLandmarker.create_from_options(options_pose) as pose, \
+     vision.ImageSegmenter.create_from_options(options_seg) as segmenter:
+    
+    start_time_ns = time.time_ns()
+    
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         fh, fw = frame.shape[:2]
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        timestamp_ms = (time.time_ns() - start_time_ns) // 1_000_000
+        
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-        res = pose.process(rgb)
-        seg_result = segmenter.process(rgb)
+        pose_res = pose.detect_for_video(mp_image, timestamp_ms)
+        seg_res = segmenter.segment_for_video(mp_image, timestamp_ms)
 
         posture = {}
         current_raw_angle = None
         current_raw_ratio = None
 
-        if res.pose_landmarks:
-            lm = res.pose_landmarks.landmark
+        if pose_res.pose_landmarks and len(pose_res.pose_landmarks) > 0:
+            lm = pose_res.pose_landmarks[0]
 
-            # Função auxiliar: verifica se a parte do corpo tem a confiança mínima exigida para cálculo
             def valid(i):
-                return lm[i].visibility > VISIBILITY_THRESHOLD
+                return hasattr(lm[i], 'visibility') and lm[i].visibility > VISIBILITY_THRESHOLD
 
             l_sh = r_sh = None
 
-            # ====== OMBROS ======
-            # Landmarks MediaPipe: 11 = Ombro esquerdo, 12 = Ombro direito
             if valid(11) and valid(12):
                 l_sh = get_pixel(lm[11], fw, fh)
                 r_sh = get_pixel(lm[12], fw, fh)
                 
-                # Desnível dos ombros em relação à horizontal
                 angle_raw = angle_horizontal(l_sh, r_sh)
-                # Mantém sempre como ângulo agudo (em módulo)
                 angle = min(abs(angle_raw), abs(180 - abs(angle_raw)))
                 current_raw_angle = angle
                 
-                # Subtrai o valor base caso o sistema esteja operando em modo calibrado
                 if IS_CALIBRATED:
                     adjusted_angle = abs(angle - BASE_ANGLE_SHOULDER)
                 else:
                     adjusted_angle = angle
                     
-                # Converte o ângulo numa pontuação de 0 a 1 e aplica o filtro de suavização (EMA)
                 score = ema('shoulder', angle_to_score(adjusted_angle, max_angle=MAX_ANGLE_SHOULDER))
                 posture['shoulder'] = (l_sh, r_sh, score, f"{angle:.1f}°")
 
-            # ====== PESCOÇO ======
-            # Landmarks: 0 = Nariz, 11 = Ombro Esq., 12 = Ombro Dir.
             if valid(0) and valid(11) and valid(12):
                 nose = get_pixel(lm[0], fw, fh)
-                # O pescoço é estimado como o ponto médio entre os dois ombros
                 neck = (
                     int((lm[11].x + lm[12].x) / 2 * fw),
                     int((lm[11].y + lm[12].y) / 2 * fh)
                 )
                 
-                # Desvio Lateral: ângulo entre o nariz e a base do pescoço em relação à vertical
                 dx = nose[0] - neck[0]
                 dy = nose[1] - neck[1]
                 angle_lat = min(abs(math.degrees(math.atan2(dx, -dy))),
                                 abs(180 - abs(math.degrees(math.atan2(dx, -dy)))))
                 score_lat = ema('neck_lat', angle_to_score(angle_lat, max_angle=MAX_ANGLE_NECK))
 
-                # Desvio Frontal: O usuário está projetando o pescoço para perto da tela?
                 score_fwd = score_lat
                 if l_sh and r_sh:
-                    sw = math.hypot(l_sh[0] - r_sh[0], l_sh[1] - r_sh[1]) # Largura dos ombros como referência
+                    sw = math.hypot(l_sh[0] - r_sh[0], l_sh[1] - r_sh[1])
                     if sw > 1e-6:
                         raw_ratio = math.hypot(nose[0] - neck[0], nose[1] - neck[1]) / sw
                         current_raw_ratio = raw_ratio
@@ -286,22 +298,19 @@ with (
                         score_fwd = ema('neck_fwd',
                                         max(0.0, min((ratio - NECK_RATIO_BASE) / 0.40, 1.0)))
 
-                # O score final do pescoço é o pior caso entre a inclinação lateral e frontal
                 posture['neck'] = (neck, nose, min(score_lat, score_fwd), f"lat:{angle_lat:.1f}°")
 
-        # ====== PRIVACIDADE ======
-        if PRIVACY_MODE and seg_result.segmentation_mask is not None:
-            seg_mask = (seg_result.segmentation_mask > SEG_THRESHOLD).astype(np.float32)
+        if PRIVACY_MODE and seg_res.confidence_masks is not None:
+            mask_idx = 1 if len(seg_res.confidence_masks) > 1 else 0
+            seg_mask = (seg_res.confidence_masks[mask_idx].numpy_view() > SEG_THRESHOLD).astype(np.float32)
             frame = apply_privacy_segmentation(frame, seg_mask, PRIVACY_STYLE)
 
-        # ====== LINHAS POR SCORE ======
         for key, (p1, p2, score, _) in posture.items():
             color = score_to_color(score)
             cv2.line(frame, p1, p2, color, 4)
             cv2.circle(frame, p1, 7, (255, 255, 255), -1)
             cv2.circle(frame, p2, 7, (255, 255, 255), -1)
 
-        # ====== MÉTRICA GLOBAL & HUD ======
         if IS_CALIBRATED:
             global_score = (sum(v[2] for v in posture.values()) / len(posture)) if posture else 1.0
             _posture_history.append(global_score < BAD_POSTURE_THRESHOLD)
@@ -352,7 +361,6 @@ with (
             cv2.putText(frame, priv_label, (hud_x, y_cur + 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.42, (140, 140, 140), 1, cv2.LINE_AA)
 
-            # Aviso piscante
             if global_score < BAD_POSTURE_THRESHOLD:
                 tick = (cv2.getTickCount() // int(cv2.getTickFrequency() * 0.5)) % 2
                 if tick == 0:
@@ -360,14 +368,13 @@ with (
                     cv2.putText(frame, "! CORRIJA A POSTURA !", (fw // 2 - 160, 50),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
         else:
-            # Modo calibração visual
             cv2.rectangle(frame, (0, fh // 2 - 60), (fw, fh // 2 + 60), (0, 0, 0), -1)
             cv2.putText(frame, "MODO DE CALIBRACAO", (fw // 2 - 200, fh // 2 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3, cv2.LINE_AA)
             cv2.putText(frame, "Sente-se com a postura ideal e pressione [ C ]", (fw // 2 - 280, fh // 2 + 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
 
-        cv2.imshow("Upright Mediapipe", frame)
+        cv2.imshow("Upright Mediapipe GPU", frame)
 
         key = cv2.waitKey(1)
         if key == 27:

@@ -1,11 +1,5 @@
 # Descrição das métricas calculadas em `mediapipe/test_mp.py`
 
-Este documento descreve, em linguagem acessível e com fórmulas, todas as métricas que o script `mediapipe/test_mp.py` calcula durante a execução.
-
-> Observação: os nomes das variáveis e parâmetros estão de acordo com o código atual no repositório (abril/2026).
-
----
-
 ## Resumo das métricas
 
 1. Ombros (shoulder)
@@ -206,15 +200,3 @@ Ajustar esses parâmetros afeta sensibilidade e comportamento do sistema.
 - `ema(...)` — suavização temporal por chave.
 - Cálculo de ângulos e ratios em `with mp_pose.Pose(...) as pose: ...` dentro de `mediapipe/test_mp.py`.
 - HUD: `draw_bar` + `score_to_color` desenham a visualização.
-
----
-
-## Próximos passos (opcionais)
-
-- Exportar métricas por minuto/por sessão para CSV para análise posterior.
-- Adicionar métricas temporais adicionais (tempo médio de cabeça inclinada por minuto, número de eventos "sustained bad posture > 10s").
-- Substituir a função `min(score_lat, score_fwd)` por uma combinação ponderada se quiser reduzir influência extrema de uma componente.
-
----
-
-Se quiser, eu adapto este documento com fórmulas LaTeX, diagramas ou exemplos gerados a partir de frames reais do seu webcam.

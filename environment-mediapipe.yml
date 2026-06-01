@@ -12,6 +12,8 @@ dependencies:
     - mediapipe
     - absl-py
     - matplotlib
+    - customtkinter
+    - Pillow
 
 # Note: On some Linux systems 'pip install mediapipe' may require extra system
 # packages or a specific Python version. If pip wheel is not available, please

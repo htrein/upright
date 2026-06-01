@@ -19,4 +19,4 @@ DEMO_DIR="$SCRIPT_DIR/mediapipe"
 echo "Changing to demo dir: $DEMO_DIR"
 cd "$DEMO_DIR"
 
-python3 test_mp.py
+python3 main.py

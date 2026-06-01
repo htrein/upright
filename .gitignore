@@ -11,3 +11,6 @@ __pycache__/
 
 # OS files
 .DS_Store
+emissions.csv
+mediapipe/posture_history.db
+mediapipe/report.html

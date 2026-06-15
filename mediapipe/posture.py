@@ -2,12 +2,10 @@ import math
 import cv2
 import config
 
-# ====== SCORE CONTÍNUO 0..1 ======
 def angle_to_score(angle_deg, max_angle=45.0):
     x = max(0.0, min(angle_deg / max_angle, 1.0))
     return 1.0 - x
 
-# ====== COR INTERPOLADA ======
 def score_to_color(score):
     score = max(0.0, min(1.0, score))
     if score >= 0.5:
@@ -22,22 +20,35 @@ def score_to_color(score):
         b = 0
     return (b, g, r)
 
-# ====== ÂNGULOS ======
+# Método de Extração 2D (Fotogrametria)
+# Referência: Projeto SAPO (Ferreira et al., 2010). 
+# Valida cientificamente a extração de ângulos posturais a partir do alinhamento
+# de pontos anatômicos bidimensionais usando trigonometria no plano frontal.
 def angle_horizontal(p1, p2):
     dx = p2[0] - p1[0]
     dy = p1[1] - p2[1]
     return math.degrees(math.atan2(dy, dx))
 
+def norm_angle(a):
+    a = a % 180
+    if a > 90:
+        a -= 180
+    return a
+
 def get_pixel(lm, w, h):
     return int(lm.x * w), int(lm.y * h)
 
-# ====== CÁLCULO PRINCIPAL ======
+# Cálculo principal do sistema de postura
+# Referência de Rastreamento: Albert et al. (2020) - Avaliação de tracking de pose sem marcadores.
+# Valida a altíssima correlação de algoritmos 2D (como MediaPipe e OpenPose) com sistemas 
+# de laboratório (Vicon) para avaliação ergonômica ocupacional.
 def evaluate_posture(lm, fw, fh):
-    posture = {}
-    extra_drawings = []
-    current_raw_angle = None
-    current_raw_ratio = None
-    current_raw_roll = None
+    dicionario_postura = {}
+    desenhos_extras = []
+    angulo_ombro_cru = None
+    angulo_ratio_cru = None
+    angulo_cabeca_cru = None
+    angulo_pescoco_cru = None
 
     def valid(i):
         v = getattr(lm[i], 'visibility', None)
@@ -47,24 +58,35 @@ def evaluate_posture(lm, fw, fh):
 
     l_sh = r_sh = None
 
-    # ====== OMBROS ======
+    # Ombros (Assimetria Horizontal)
+    # Referência Tecnológica: Kim et al. (ArXiv:2512.12718, 2025) - Valida a avaliação postural e rastreio de eixo espinhal a partir de imagens 2D.
+    # Referência Biomecânica: Ruivo et al. (2014) - Estudos populacionais estimam assimetria anatômica natural média de ~1.2° no plano frontal.
+    # Limiares de Alerta (Heurística Clínica / Diretrizes SOSORT): 
+    #   <= 2°  : Normal (Tolerância anatômica)
+    #   2° a 10° : Atenção (Assimetria tônica ou fadiga postural)
+    #   > 10°    : Perigo (Indicador clínico que exige investigação para desvios estruturais como escoliose).
     if valid(11) and valid(12):
         l_sh = get_pixel(lm[11], fw, fh)
         r_sh = get_pixel(lm[12], fw, fh)
         
-        angle_raw = angle_horizontal(l_sh, r_sh)
-        angle = min(abs(angle_raw), abs(180 - abs(angle_raw)))
-        current_raw_angle = angle
+        angulo_cru = angle_horizontal(l_sh, r_sh)
+        angulo = norm_angle(angulo_cru)
+        angulo_ombro_cru = angulo
         
         if config.IS_CALIBRATED:
-            adjusted_angle = abs(angle - config.BASE_ANGLE_SHOULDER)
+            angulo_ajustado = abs(angulo - config.BASE_ANGLE_SHOULDER)
         else:
-            adjusted_angle = angle
+            angulo_ajustado = angulo
             
-        score = config.get_ema('shoulder', angle_to_score(adjusted_angle, max_angle=config.MAX_ANGLE_SHOULDER))
-        posture['shoulder'] = (l_sh, r_sh, score, f"{angle:.1f}°")
+        nota_ombro = config.get_ema('shoulder', angle_to_score(angulo_ajustado, max_angle=config.MAX_ANGLE_SHOULDER))
+        dicionario_postura['shoulder'] = (l_sh, r_sh, nota_ombro, f"{angulo:.1f}°")
 
-    # ====== PESCOÇO ======
+    # Pescoço (Desvio Lateral)
+    # Referência Ergonômica: Inspirado no método RULA e ISO 11226.
+    # RULA penaliza (+1 score) qualquer flexão lateral do pescoço, enquanto a ISO 11226 
+    # estabelece limite estrito de 10° para inclinação estática.
+    # Limiar do Código (config.MAX_ANGLE_NECK): Adota-se 15° como limiar heurístico de software
+    # para equilibrar a tolerância prática com a fadiga de alertas.
     if valid(0) and valid(11) and valid(12):
         nose = get_pixel(lm[0], fw, fh)
         neck = (
@@ -74,24 +96,88 @@ def evaluate_posture(lm, fw, fh):
         
         dx = nose[0] - neck[0]
         dy = nose[1] - neck[1]
-        angle_lat = min(abs(math.degrees(math.atan2(dx, -dy))),
-                        abs(180 - abs(math.degrees(math.atan2(dx, -dy)))))
-        score_lat = config.get_ema('neck_lat', angle_to_score(angle_lat, max_angle=config.MAX_ANGLE_NECK))
+        angulo_pescoco_cru_bruto = math.degrees(math.atan2(dx, -dy))
+        angulo_pescoco_lat = norm_angle(angulo_pescoco_cru_bruto)
+        angulo_pescoco_cru = angulo_pescoco_lat
+        
+        if config.IS_CALIBRATED:
+            angulo_pescoco_ajustado = abs(angulo_pescoco_lat - config.BASE_ANGLE_NECK)
+        else:
+            angulo_pescoco_ajustado = angulo_pescoco_lat
+            
+        nota_lateral = config.get_ema('neck_lat', angle_to_score(angulo_pescoco_ajustado, max_angle=config.MAX_ANGLE_NECK))
 
-        score_fwd = score_lat
-        ratio = 0
-        if l_sh and r_sh:
-            sw = math.hypot(l_sh[0] - r_sh[0], l_sh[1] - r_sh[1]) 
+        # Pescoço (Forward Head Posture - Abordagem 2D Pura: Slump e Pitch)
+        # Ignora profundidade (eixo Z) e foca na compressão vertical e inclinação do rosto.
+        # Referência Clínica: Proxy 2D para medição do Ângulo Craniovertebral (CVA).
+        # Estudos (Lima et al. 2023, Yip et al. 2008) indicam risco severo de FHP em CVA < 50°.
+        # Referência de Carga Biomecânica: Hansraj (2014) - a flexão contínua aumenta a carga na cervical para até 27kg.
+        nota_frente = nota_lateral
+        taxa_queda = 0.0
+        taxa_rosto = 0.0
+        
+        if l_sh and r_sh and valid(2) and valid(5) and valid(7) and valid(8):
+            # 1. Referência de Largura (para tornar a medição independente da distância da câmera)
+            sw = math.hypot(lm[11].x - lm[12].x, lm[11].y - lm[12].y)
+            
             if sw > 1e-6:
-                raw_ratio = math.hypot(nose[0] - neck[0], nose[1] - neck[1]) / sw
-                current_raw_ratio = raw_ratio
-                ratio = config.get_ema('neck_fwd_ratio', raw_ratio)
-                score_fwd = config.get_ema('neck_fwd',
-                                           max(0.0, min((ratio - config.NECK_RATIO_BASE) / 0.40, 1.0)))
+                # --- MÉTRICA 1: Desabamento Vertical (Slump) ---
+                # Distância vertical pura (Y) entre a média dos ombros e a média dos olhos.
+                # Quando o usuário curva o pescoço para a frente/baixo, essa distância encolhe.
+                shoulder_y_avg = (lm[11].y + lm[12].y) / 2.0
+                eye_y_avg = (lm[2].y + lm[5].y) / 2.0
+                raw_slump = (shoulder_y_avg - eye_y_avg) / sw
+                
+                # --- MÉTRICA 2: Inclinação do Queixo (Pitch) ---
+                # Distância vertical entre as orelhas e o nariz.
+                # Quando a cabeça vai para a frente, o queixo sobe para olhar a tela.
+                # No OpenCV, Y cresce para baixo. Se o nariz sobe (menor Y), a diferença aumenta.
+                ear_y_avg = (lm[7].y + lm[8].y) / 2.0
+                nose_y = lm[0].y
+                raw_pitch = (ear_y_avg - nose_y) / sw
+                
+                # Suavização para evitar tremores
+                taxa_queda = config.get_ema('neck_slump', raw_slump)
+                taxa_rosto = config.get_ema('neck_pitch', raw_pitch)
+                
+                if getattr(config, 'IS_CALIBRATED', False):
+                    # SLUMP DEVIATION: Positivo se o pescoço "encolheu" (Slump atual < Base)
+                    desvio_queda = getattr(config, 'BASE_SLUMP', 0.0) - taxa_queda
+                    
+                    # PITCH DEVIATION: Positivo se o queixo "levantou" (Pitch atual > Base)
+                    desvio_rosto = taxa_rosto - getattr(config, 'BASE_PITCH', 0.0)
+                    
+                    max_desvio = getattr(config, 'MAX_RATIO_DEVIATION', 0.15)
+                    
+                    # Calcula o nível de alerta para ambas as heurísticas
+                    if desvio_queda > 0:
+                        penalidade_queda = max(0.0, min(desvio_queda / max_desvio, 1.0))
+                    else:
+                        penalidade_queda = 0.0
+                        
+                    if desvio_rosto > 0:
+                        penalidade_rosto = max(0.0, min(desvio_rosto / max_desvio, 1.0))
+                    else:
+                        penalidade_rosto = 0.0
+                    
+                    # Pega a penalidade mais severa (Dispara se a pessoa encolher muito OU levantar muito o queixo)
+                    pior_erro = max(penalidade_queda, penalidade_rosto)
+                    nota_frente = config.get_ema('neck_fwd', 1.0 - pior_erro)
 
-        posture['neck'] = (neck, nose, min(score_lat, score_fwd), {'score_lat': score_lat, 'score_fwd': score_fwd, 'ratio': ratio})
+        # Atualiza o dicionário de informações para a UI desenhar as setas
+        menor_nota = min(nota_lateral, nota_frente)
+        dicionario_postura['neck'] = (neck, nose, menor_nota, {
+            'score_lat': nota_lateral, 
+            'score_fwd': nota_frente, 
+            'slump_ratio': taxa_queda,
+            'pitch_ratio': taxa_rosto
+        })
 
-    # ====== CABEÇA (Inclinação Lateral) ======
+    # Cabeça (Inclinação Lateral / Head Roll)
+    # Referências Clínicas: ISO 11226 (Princípio de Simetria) e Kapandji (Fisiologia Articular).
+    # Kapandji define a amplitude total (ROM) do pescoço. Os limiares de software (4° a 15°)
+    # garantem a permanência na "zona neutra" segura, prevenindo o desgaste dos discos cervicais.
+    # Métrica de Engenharia: Média do alinhamento horizontal ocular, auricular e bucal para redução de ruído (jitter).
     if valid(2) and valid(5) and valid(7) and valid(8) and valid(9) and valid(10):
         l_eye = get_pixel(lm[2], fw, fh)
         r_eye = get_pixel(lm[5], fw, fh)
@@ -104,55 +190,63 @@ def evaluate_posture(lm, fw, fh):
         angle_ear_raw = angle_horizontal(l_ear, r_ear)
         angle_mouth_raw = angle_horizontal(l_mouth, r_mouth)
         
-        angle_eye = min(abs(angle_eye_raw), abs(180 - abs(angle_eye_raw)))
-        angle_ear = min(abs(angle_ear_raw), abs(180 - abs(angle_ear_raw)))
-        angle_mouth = min(abs(angle_mouth_raw), abs(180 - abs(angle_mouth_raw)))
+        angulo_olho = norm_angle(angle_eye_raw)
+        angulo_orelha = norm_angle(angle_ear_raw)
+        angulo_boca = norm_angle(angle_mouth_raw)
         
-        avg_angle = (angle_eye + angle_ear + angle_mouth) / 3.0
-        current_raw_roll = avg_angle
+        angulo_medio = (angulo_olho + angulo_orelha + angulo_boca) / 3.0
+        angulo_cabeca_cru = angulo_medio
         
         if config.IS_CALIBRATED:
-            adjusted_roll = abs(avg_angle - config.BASE_HEAD_ROLL)
+            rolamento_ajustado = abs(angulo_medio - config.BASE_HEAD_ROLL)
         else:
-            adjusted_roll = avg_angle
+            rolamento_ajustado = angulo_medio
             
-        score_head = config.get_ema('head_roll', angle_to_score(adjusted_roll, max_angle=config.MAX_HEAD_ROLL_ANGLE))
+        nota_cabeca = config.get_ema('head_roll', angle_to_score(rolamento_ajustado, max_angle=config.MAX_HEAD_ROLL_ANGLE))
         
-        posture['head'] = (l_eye, r_eye, score_head, f"{avg_angle:.1f}°")
+        dicionario_postura['head'] = (l_eye, r_eye, nota_cabeca, f"{angulo_medio:.1f}°")
 
-        head_color = score_to_color(score_head)
-        extra_drawings.extend([
-            ('line', l_mouth, r_mouth, head_color, 4),
-            ('circle', l_mouth, 7, (255, 255, 255), -1),
-            ('circle', r_mouth, 7, (255, 255, 255), -1),
-            ('line', l_ear, r_ear, head_color, 4),
-            ('circle', l_ear, 7, (255, 255, 255), -1),
-            ('circle', r_ear, 7, (255, 255, 255), -1)
-        ])
+        cor_cabeca = (255, 255, 255) if not getattr(config, 'IS_CALIBRATED', True) else score_to_color(nota_cabeca)
+        desenhos_extras.append(('line', l_mouth, r_mouth, cor_cabeca, 4))
+        desenhos_extras.append(('circle', l_mouth, 7, (255, 255, 255), -1))
+        desenhos_extras.append(('circle', r_mouth, 7, (255, 255, 255), -1))
+        desenhos_extras.append(('line', l_ear, r_ear, cor_cabeca, 4))
+        desenhos_extras.append(('circle', l_ear, 7, (255, 255, 255), -1))
+        desenhos_extras.append(('circle', r_ear, 7, (255, 255, 255), -1))
 
-    return posture, extra_drawings, current_raw_angle, current_raw_ratio, current_raw_roll
+    return dicionario_postura, desenhos_extras, angulo_ombro_cru, angulo_ratio_cru, angulo_cabeca_cru, angulo_pescoco_cru
 
 
 def draw_posture_lines(frame, posture, extra_drawings):
+    is_calibrated = getattr(config, 'IS_CALIBRATED', True)
     for key, (p1, p2, score, _) in posture.items():
-        color = score_to_color(score)
+        color = (255, 255, 255) if not is_calibrated else score_to_color(score)
         cv2.line(frame, p1, p2, color, 4)
         cv2.circle(frame, p1, 7, (255, 255, 255), -1)
         cv2.circle(frame, p2, 7, (255, 255, 255), -1)
         
-        if score < 0.8 and key in ['shoulder', 'head']:
+        if not is_calibrated:
+            continue
+            
+        # Setas de feedback para ombros e cabeca:
+        # Detecta qual lado esta mais baixo (p1 ou p2) e aponta setas
+        # indicando a direcao de correcao para cada ponto.
+        if score < 0.55 and key in ['shoulder', 'head']:
             offset = 15
             arrow_len = 25
             arrow_color = (255, 0, 150) 
             
-            if p1[1] > p2[1]:
+            if p1[1] > p2[1]:  # p1 esta mais baixo: sobe p1, desce p2
                 cv2.arrowedLine(frame, (p1[0], p1[1] - offset), (p1[0], p1[1] - offset - arrow_len), arrow_color, 4, tipLength=0.4)
                 cv2.arrowedLine(frame, (p2[0], p2[1] + offset), (p2[0], p2[1] + offset + arrow_len), arrow_color, 4, tipLength=0.4)
-            else:
+            else:              # p2 esta mais baixo: sobe p2, desce p1
                 cv2.arrowedLine(frame, (p2[0], p2[1] - offset), (p2[0], p2[1] - offset - arrow_len), arrow_color, 4, tipLength=0.4)
                 cv2.arrowedLine(frame, (p1[0], p1[1] + offset), (p1[0], p1[1] + offset + arrow_len), arrow_color, 4, tipLength=0.4)
                 
-        elif score < 0.8 and key == 'neck':
+        # Setas de feedback para o pescoço: Heurística visual de UI/UX.
+        # dx (horizontal): score_lat ruim -> aponta para centralizar a cabeça lateralmente.
+        # dy (vertical):   score_fwd ruim -> orienta o usuário a recolher ou estender o pescoço.
+        elif score < 0.55 and key == 'neck':
             arrow_len = 30
             arrow_color = (255, 0, 150)
             mid_x = int((p1[0] + p2[0]) / 2)
@@ -161,21 +255,26 @@ def draw_posture_lines(frame, posture, extra_drawings):
             info_dict = posture['neck'][3]
             score_lat = info_dict['score_lat']
             score_fwd = info_dict['score_fwd']
-            ratio = info_dict['ratio']
             
             dx = dy = 0
             
-            if score_lat < 0.8:
+            if score_lat < 0.55:  # cabeca inclinada lateralmente
                 if p2[0] < p1[0]:
-                    dx = arrow_len // 2 
+                    dx = arrow_len // 2  # nariz a esquerda do pescoco: aponta para direita
                 else:
-                    dx = -arrow_len // 2 
+                    dx = -arrow_len // 2  # nariz a direita: aponta para esquerda
                     
-            if score_fwd < 0.8 and config.IS_CALIBRATED:
-                if ratio < config.NECK_RATIO_BASE:
-                    dy = arrow_len // 2 
+            if score_fwd < 0.55 and config.IS_CALIBRATED:
+                # Com a nova heurística, sabemos exatamente o que o usuário fez de errado:
+                slump_dev = config.BASE_SLUMP - info_dict['slump_ratio']
+                pitch_dev = info_dict['pitch_ratio'] - config.BASE_PITCH
+                
+                if slump_dev > pitch_dev:
+                    # O pescoço encolheu / desabou. Seta apontando para CIMA (Cresça a postura)
+                    dy = -arrow_len // 2  
                 else:
-                    dy = -arrow_len // 2
+                    # O queixo está muito levantado. Seta apontando para BAIXO (Abaixe o queixo / Retraia a cabeça)
+                    dy = arrow_len // 2
                     
             if dx != 0:
                 cv2.arrowedLine(frame, (mid_x - dx, mid_y), (mid_x + dx, mid_y), arrow_color, 4, tipLength=0.4)

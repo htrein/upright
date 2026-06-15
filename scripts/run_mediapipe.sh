@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./scripts/run_mediapipe.sh [conda_env_name]
-# Default env name is 'mp_fix' to match your example; you can pass another name.
+# Usage: ./scripts/run_mediapipe.sh [conda_env_name] [--gpu|--cpu]
+#   conda_env_name : nome do ambiente conda (padrão: mp_fix)
+#   --gpu          : usa GPU para inferência (requer Linux + OpenGL ES)
+#   --cpu          : usa CPU (padrão, compatível com todos os sistemas)
 ENV_NAME="${1:-mp_fix}"
+DEVICE_FLAG="${2:---cpu}"   # segundo argumento: --gpu ou --cpu (padrão: --cpu)
 
 if ! command -v conda >/dev/null 2>&1; then
   echo "conda not found in PATH. Please ensure conda is installed and 'conda init' was run." >&2
@@ -19,4 +22,5 @@ DEMO_DIR="$SCRIPT_DIR/mediapipe"
 echo "Changing to demo dir: $DEMO_DIR"
 cd "$DEMO_DIR"
 
-python3 main.py
+echo "Iniciando com modo: $DEVICE_FLAG"
+python3 main.py "$DEVICE_FLAG"

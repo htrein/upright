@@ -39,9 +39,9 @@ def _score_color_rgba(score: float) -> tuple:
         r, g, b = 255, int(t * 200), 0
     return (r, g, b, 255)
 
-def _rounded_rect(draw, xy, radius, fill):
+def _rounded_rect(draw, xy, radius, fill, outline=None, width=1):
     try:
-        draw.rounded_rectangle(xy, radius=radius, fill=fill)
+        draw.rounded_rectangle(xy, radius=radius, fill=fill, outline=outline, width=width)
     except AttributeError:
         x0, y0, x1, y1 = xy
         draw.rectangle([x0 + radius, y0, x1 - radius, y1], fill=fill)
@@ -65,32 +65,50 @@ def draw_hud_strip(frame, posture, global_score, pct_bad):
     d.rectangle([0, 0, fw, STRIP_H],          fill=(8, 14, 35, 215))
     d.rectangle([0, STRIP_H - 2, fw, STRIP_H], fill=(56, 189, 248, 180))
 
-    f_sm = _get_font(11)
+    f_sm = _get_font(12)
     f_md = _get_font(13)
     f_bd = _get_font(13, bold=True)
+    f_title = _get_font(24, bold=True)
     
     cy_top  = 12
     cy_text = 40
     cy_bar  = 62
 
     x = PAD
-    d.text((x, cy_top), "UPRIGHT", font=f_bd,  fill=(56, 189, 248, 255))
-    x += d.textlength("UPRIGHT", font=f_bd) + 8
-    u_txt = f"| {config.CURRENT_USERNAME}"
-    d.text((x, cy_top + 2), u_txt, font=f_sm, fill=(100, 120, 150, 255))
-    x += d.textlength(u_txt, font=f_sm) + 8
-    r_txt = f"[{config.CURRENT_RIGIDITY}]"
-    d.text((x, cy_top + 2), r_txt, font=f_sm, fill=(71, 85, 105, 200))
+    d.text((x, cy_top - 4), "UPRIGHT", font=f_title,  fill=(56, 189, 248, 255))
+    x += d.textlength("UPRIGHT", font=f_title) + 12
+    u_txt = f"{config.CURRENT_USERNAME}"
+    d.text((x, cy_top + 6), u_txt, font=f_sm, fill=(100, 120, 150, 255))
 
     rx = fw - PAD
-    s_txt = "[S] Config"
-    stw = d.textlength(s_txt, font=f_sm)
-    d.text((rx - stw, cy_top + 2), s_txt, font=f_sm, fill=(71, 85, 105, 190))
-    rx -= stw + 14
-    if config.IS_PAUSED:
-        p_txt = "|| PAUSADO  "
-        ptw   = d.textlength(p_txt, font=f_sm)
-        d.text((rx - ptw, cy_top + 2), p_txt, font=f_sm, fill=(0, 160, 255, 255))
+    
+    options = [
+        ("[S]", "Config"),
+        ("[R]", "Relatório"),
+        ("[Espaco]", "Retomar" if config.IS_PAUSED else "Pausar"),
+        ("[P]", "Filtro ON" if config.PRIVACY_MODE else "Filtro OFF"),
+    ]
+    if config.PRIVACY_MODE:
+        options.append(("[M]", config.PRIVACY_STYLE.title()))
+        
+    options.append(("[F]", "Tela Normal" if config.get_ema('is_fullscreen', 1.0) == 1.0 else "Tela Cheia"))
+    options.append(("[Q] / [ESC]", "Sair"))
+
+    for key_txt, val_txt in options:
+        kw = d.textlength(key_txt, font=f_bd)
+        vw = d.textlength(val_txt, font=f_sm)
+        total_w = kw + vw + 8 + 16 # padding
+        
+        if val_txt == "Sair":
+            _rounded_rect(d, [rx - total_w, cy_top - 4, rx, cy_top + 18], 4, (30, 41, 59, 200), outline=(239, 68, 68, 255), width=1)
+            d.text((rx - total_w + 8, cy_top - 1), key_txt, font=f_bd, fill=(239, 68, 68, 255))
+        else:
+            _rounded_rect(d, [rx - total_w, cy_top - 4, rx, cy_top + 18], 4, (30, 41, 59, 200))
+            d.text((rx - total_w + 8, cy_top - 1), key_txt, font=f_bd, fill=(56, 189, 248, 255))
+            
+        d.text((rx - total_w + 8 + kw + 8, cy_top + 1), val_txt, font=f_sm, fill=(200, 215, 235, 255))
+        
+        rx -= total_w + 8 # gap entre os chips
 
     pieces = []
     for key, (_, _, score, _) in posture.items():
@@ -122,22 +140,22 @@ def draw_hud_strip(frame, posture, global_score, pct_bad):
     return cv2.cvtColor(np.array(pil_img.convert("RGB")), cv2.COLOR_RGB2BGR)
 
 def draw_calibration_hud(frame):
-    fh, fw = frame.shape[:2]
-    pil_f = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert("RGBA")
-    overlay_c = Image.new("RGBA", pil_f.size, (0, 0, 0, 0))
-    dc = ImageDraw.Draw(overlay_c)
+    altura_tela, largura_tela = frame.shape[:2]
+    imagem_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert("RGBA")
+    camada_fundo = Image.new("RGBA", imagem_pil.size, (0, 0, 0, 0))
+    desenho_camada = ImageDraw.Draw(camada_fundo)
     band_h = 72
-    band_y0 = fh - band_h
-    dc.rectangle([0, band_y0, fw, fh], fill=(8, 14, 35, 215))
-    dc.rectangle([0, band_y0, fw, band_y0 + 2], fill=(56, 189, 248, 200))
-    pil_f = Image.alpha_composite(pil_f, overlay_c)
-    dc2 = ImageDraw.Draw(pil_f)
+    band_y0 = altura_tela - band_h
+    desenho_camada.rectangle([0, band_y0, largura_tela, altura_tela], fill=(8, 14, 35, 215))
+    desenho_camada.rectangle([0, band_y0, largura_tela, band_y0 + 2], fill=(56, 189, 248, 200))
+    imagem_pil = Image.alpha_composite(imagem_pil, camada_fundo)
+    desenho = ImageDraw.Draw(imagem_pil)
     f_calib_title = _get_font(22, bold=True)
     f_calib_sub = _get_font(14)
     title = "MODO DE CALIBRACAO"
-    sub = "Sente-se com a postura ideal e pressione  [ C ]"
-    tw_t = dc2.textlength(title, font=f_calib_title)
-    tw_s = dc2.textlength(sub, font=f_calib_sub)
-    dc2.text(((fw - tw_t) // 2, band_y0 + 8), title, font=f_calib_title, fill=(56, 189, 248, 255))
-    dc2.text(((fw - tw_s) // 2, band_y0 + 38), sub, font=f_calib_sub, fill=(200, 215, 235, 255))
-    return cv2.cvtColor(np.array(pil_f.convert("RGB")), cv2.COLOR_RGB2BGR)
+    sub = "Postura ideal: [ C ] Calibrar  |  [ ESC ] ou [ Q ] Sair"
+    tw_t = desenho.textlength(title, font=f_calib_title)
+    tw_s = desenho.textlength(sub, font=f_calib_sub)
+    desenho.text(((largura_tela - tw_t) // 2, band_y0 + 8), title, font=f_calib_title, fill=(56, 189, 248, 255))
+    desenho.text(((largura_tela - tw_s) // 2, band_y0 + 38), sub, font=f_calib_sub, fill=(200, 215, 235, 255))
+    return cv2.cvtColor(np.array(imagem_pil.convert("RGB")), cv2.COLOR_RGB2BGR)

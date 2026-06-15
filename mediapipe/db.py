@@ -5,18 +5,15 @@ from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posture_history.db')
 
-
 def get_connection():
     return sqlite3.connect(DB_PATH)
 
-
 def init_db():
-    """Inicializa todas as tabelas do banco de dados, se não existirem."""
-    conn = get_connection()
-    cursor = conn.cursor()
+    conexao_banco = get_connection()
+    ponteiro = conexao_banco.cursor()
 
     # Usuários
-    cursor.execute('''
+    ponteiro.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             username      TEXT    NOT NULL UNIQUE,
@@ -26,7 +23,7 @@ def init_db():
     ''')
 
     # Calibração por usuário
-    cursor.execute('''
+    ponteiro.execute('''
         CREATE TABLE IF NOT EXISTS calibrations (
             id                   INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id              INTEGER NOT NULL UNIQUE,
@@ -39,7 +36,7 @@ def init_db():
     ''')
 
     # Preferências do usuário (rigidez)
-    cursor.execute('''
+    ponteiro.execute('''
         CREATE TABLE IF NOT EXISTS user_preferences (
             user_id  INTEGER PRIMARY KEY,
             rigidity TEXT    NOT NULL DEFAULT 'Normal',
@@ -47,8 +44,8 @@ def init_db():
         )
     ''')
 
-    # Sessões (com user_id opcional para compatibilidade retroativa)
-    cursor.execute('''
+    # Sessões
+    ponteiro.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id    INTEGER REFERENCES users(id),
@@ -57,24 +54,43 @@ def init_db():
         )
     ''')
 
-    # Adiciona coluna user_id em sessions caso a tabela já exista sem ela
     try:
-        cursor.execute("ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)")
+        ponteiro.execute("ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        ponteiro.execute("ALTER TABLE calibrations ADD COLUMN base_slump REAL")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        ponteiro.execute("ALTER TABLE calibrations ADD COLUMN base_pitch REAL")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        ponteiro.execute("ALTER TABLE calibrations ADD COLUMN base_head_pitch REAL")
     except sqlite3.OperationalError:
         pass
         
-    # Adiciona coluna calib_mode em user_preferences
     try:
-        cursor.execute("ALTER TABLE user_preferences ADD COLUMN calib_mode TEXT DEFAULT 'Usar Padrao do Sistema'")
+        ponteiro.execute("ALTER TABLE user_preferences ADD COLUMN calib_mode TEXT DEFAULT 'Usar Padrao do Sistema'")
     except sqlite3.OperationalError:
         pass
+
     try:
-        cursor.execute('ALTER TABLE sessions ADD COLUMN user_id INTEGER REFERENCES users(id)')
+        ponteiro.execute("ALTER TABLE calibrations ADD COLUMN base_angle_neck REAL DEFAULT 0.0")
     except sqlite3.OperationalError:
-        pass  # coluna já existe
+        pass
+
+    try:
+        ponteiro.execute("ALTER TABLE user_preferences ADD COLUMN audio_alert BOOLEAN DEFAULT 1")
+    except sqlite3.OperationalError:
+        pass
 
     # Logs de postura
-    cursor.execute('''
+    ponteiro.execute('''
         CREATE TABLE IF NOT EXISTS posture_logs (
             id             INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id     INTEGER,
@@ -87,15 +103,13 @@ def init_db():
         )
     ''')
 
-    conn.commit()
-    conn.close()
+    conexao_banco.commit()
+    conexao_banco.close()
 
 
-# ── Autenticação ──────────────────────────────────────────────────────────────
-
+# Autenticação ------
 def _hash_password(password: str) -> str:
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
 
 def register_user(username: str, password: str):
     """Cria novo usuário. Retorna user_id ou None se username já existir."""
@@ -115,7 +129,6 @@ def register_user(username: str, password: str):
     finally:
         conn.close()
 
-
 def login_user(username: str, password: str):
     """Valida credenciais. Retorna user_id ou None se inválido."""
     conn = get_connection()
@@ -130,73 +143,90 @@ def login_user(username: str, password: str):
         return row[0]
     return None
 
-
-def get_all_users():
-    """Retorna lista de (id, username) de todos os usuários."""
+def delete_user(user_id: int):
+    """Exclui permanentemente o usuário e todos os dados associados."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, username FROM users ORDER BY username ASC')
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
-
-
-# ── Preferências ────────────────────────────────────────────────────
-
-def save_preferences(user_id: int, rigidity: str, calib_mode: str = 'Usar Padrao do Sistema'):
-    conn = get_connection()
-    conn.execute('''
-        INSERT INTO user_preferences (user_id, rigidity, calib_mode) VALUES (?, ?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET 
-            rigidity = excluded.rigidity,
-            calib_mode = excluded.calib_mode
-    ''', (user_id, rigidity, calib_mode))
+    cursor.execute('DELETE FROM posture_logs WHERE session_id IN (SELECT id FROM sessions WHERE user_id = ?)', (user_id,))
+    cursor.execute('DELETE FROM sessions WHERE user_id = ?', (user_id,))
+    cursor.execute('DELETE FROM user_preferences WHERE user_id = ?', (user_id,))
+    cursor.execute('DELETE FROM calibrations WHERE user_id = ?', (user_id,))
+    cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
     conn.commit()
     conn.close()
 
+# Preferências ------
+def save_preferences(user_id: int, rigidity: str, calib_mode: str = 'Usar Padrao do Sistema', audio_alert: bool = True):
+    conn = get_connection()
+    conn.execute('''
+        INSERT INTO user_preferences (user_id, rigidity, calib_mode, audio_alert) VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET 
+            rigidity = excluded.rigidity,
+            calib_mode = excluded.calib_mode,
+            audio_alert = excluded.audio_alert
+    ''', (user_id, rigidity, calib_mode, int(audio_alert)))
+    conn.commit()
+    conn.close()
 
 def load_preferences(user_id: int):
     """Retorna dict com preferências ou None se o usuário nunca configurou."""
     conn = get_connection()
     try:
         row = conn.execute(
-            'SELECT rigidity, calib_mode FROM user_preferences WHERE user_id = ?', (user_id,)
+            'SELECT rigidity, calib_mode, audio_alert FROM user_preferences WHERE user_id = ?', (user_id,)
         ).fetchone()
         conn.close()
-        return {'rigidity': row[0], 'calib_mode': row[1]} if row else None
+        return {'rigidity': row[0], 'calib_mode': row[1], 'audio_alert': bool(row[2])} if row else None
     except sqlite3.OperationalError:
-        row = conn.execute('SELECT rigidity FROM user_preferences WHERE user_id = ?', (user_id,)).fetchone()
-        conn.close()
-        return {'rigidity': row[0], 'calib_mode': 'Usar Padrao do Sistema'} if row else None
+        try:
+            row = conn.execute('SELECT rigidity, calib_mode FROM user_preferences WHERE user_id = ?', (user_id,)).fetchone()
+            conn.close()
+            return {'rigidity': row[0], 'calib_mode': row[1], 'audio_alert': True} if row else None
+        except sqlite3.OperationalError:
+            row = conn.execute('SELECT rigidity FROM user_preferences WHERE user_id = ?', (user_id,)).fetchone()
+            conn.close()
+            return {'rigidity': row[0], 'calib_mode': 'Usar Padrao do Sistema', 'audio_alert': True} if row else None
 
-
-# ── Calibração ────────────────────────────────────────────────────────────────
-
+# Calibração -----
 def save_calibration(user_id: int, base_angle_shoulder: float,
-                     neck_ratio_base: float, base_head_roll: float):
+                     neck_ratio_base: float, base_head_roll: float, base_angle_neck: float = 0.0,
+                     base_slump: float = 0.0, base_pitch: float = 0.0):
     """Salva (ou atualiza) a calibração do usuário."""
     conn = get_connection()
     cursor = conn.cursor()
     now = datetime.now().isoformat()
     cursor.execute('''
-        INSERT INTO calibrations (user_id, base_angle_shoulder, neck_ratio_base, base_head_roll, updated_at)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO calibrations (user_id, base_angle_shoulder, neck_ratio_base, base_head_roll, base_angle_neck, base_slump, base_pitch, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             base_angle_shoulder = excluded.base_angle_shoulder,
             neck_ratio_base     = excluded.neck_ratio_base,
             base_head_roll      = excluded.base_head_roll,
+            base_angle_neck     = excluded.base_angle_neck,
+            base_slump          = excluded.base_slump,
+            base_pitch          = excluded.base_pitch,
             updated_at          = excluded.updated_at
-    ''', (user_id, base_angle_shoulder, neck_ratio_base, base_head_roll, now))
+    ''', (user_id, base_angle_shoulder, neck_ratio_base, base_head_roll, base_angle_neck, base_slump, base_pitch, now))
     conn.commit()
     conn.close()
-
 
 def load_calibration(user_id: int):
     """Retorna dict com calibração do usuário ou None se não houver."""
     conn = get_connection()
     cursor = conn.cursor()
+    
+    try:
+        cursor.execute("ALTER TABLE calibrations ADD COLUMN base_slump REAL")
+    except sqlite3.OperationalError:
+        pass
+        
+    try:
+        cursor.execute("ALTER TABLE calibrations ADD COLUMN base_pitch REAL")
+    except sqlite3.OperationalError:
+        pass
+        
     cursor.execute('''
-        SELECT base_angle_shoulder, neck_ratio_base, base_head_roll, updated_at
+        SELECT base_angle_shoulder, neck_ratio_base, base_head_roll, base_angle_neck, base_slump, base_pitch, updated_at
         FROM calibrations WHERE user_id = ?
     ''', (user_id,))
     row = cursor.fetchone()
@@ -206,13 +236,14 @@ def load_calibration(user_id: int):
             'base_angle_shoulder': row[0],
             'neck_ratio_base':     row[1],
             'base_head_roll':      row[2],
-            'updated_at':          row[3],
+            'base_angle_neck':     row[3] if len(row) > 3 and row[3] is not None else 0.0,
+            'base_slump':          row[4] if len(row) > 4 and row[4] is not None else 0.0,
+            'base_pitch':          row[5] if len(row) > 5 and row[5] is not None else 0.0,
+            'updated_at':          row[6],
         }
     return None
 
-
-# ── Sessões ───────────────────────────────────────────────────────────────────
-
+# Sessões ------
 def start_session(user_id=None):
     """Inicia nova sessão e retorna o ID."""
     conn = get_connection()
@@ -227,7 +258,6 @@ def start_session(user_id=None):
     conn.close()
     return session_id
 
-
 def end_session(session_id):
     """Atualiza a sessão com o horário de término."""
     if session_id is None:
@@ -238,7 +268,6 @@ def end_session(session_id):
     cursor.execute('UPDATE sessions SET end_time = ? WHERE id = ?', (now, session_id))
     conn.commit()
     conn.close()
-
 
 def log_posture(session_id, global_score, shoulder_score, neck_score, is_bad_posture):
     """Insere um log de postura agregada no banco."""

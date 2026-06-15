@@ -3,24 +3,24 @@ import numpy as np
 import config
 
 def apply_privacy_segmentation(frame, seg_mask, mode):
-    mask = cv2.GaussianBlur(seg_mask, (21, 21), 0)
-    mask3 = mask[:, :, np.newaxis]   
+    # Converte a máscara suave do MediaPipe em booleana para indexação direta.
+    # O uso de indexação numpy (frame[mask]) elimina multiplicações de ponto flutuante, 
+    # Garantir que a máscara seja estritamente 2D (H, W), eliminando possíveis canais unitários (H, W, 1)
+    mask_bool = np.squeeze(seg_mask > 0.5)
 
     if mode == 'silhouette':
         bg = np.full_like(frame, config.SILHOUETTE_COLOR, dtype=np.uint8)
-        result = (mask3 * bg + (1 - mask3) * frame).astype(np.uint8)
+        frame[mask_bool] = bg[mask_bool]
 
     elif mode == 'blur':
         k = config.BLUR_KSIZE if config.BLUR_KSIZE % 2 == 1 else config.BLUR_KSIZE + 1
         blurred = cv2.GaussianBlur(frame, (k, k), 0)
-        result = (mask3 * blurred + (1 - mask3) * frame).astype(np.uint8)
+        frame[mask_bool] = blurred[mask_bool]
 
     elif mode == 'mosaic':
         h, w = frame.shape[:2]
         small = cv2.resize(frame, (int(w * config.MOSAIC_SCALE), int(h * config.MOSAIC_SCALE)), interpolation=cv2.INTER_LINEAR)
         mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
-        result = (mask3 * mosaic + (1 - mask3) * frame).astype(np.uint8)
-    else:
-        result = frame
+        frame[mask_bool] = mosaic[mask_bool]
         
-    return result
+    return frame

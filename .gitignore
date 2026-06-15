@@ -1,16 +1,16 @@
-# Python
+# Bancos de dados locais
+*.db
+*.sqlite3
+
+# Arquivos gerados e exportações
+emissions.csv
+report.html
+
+# Arquivos de Lock de Editores
+*.lock
+*.asta.lock
+
+# Cache do Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C++ extensions
-*.so
-
-# Model weights (large files)
-*.pth
-
-# OS files
-.DS_Store
-emissions.csv
-mediapipe/posture_history.db
-mediapipe/report.html

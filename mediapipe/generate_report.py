@@ -91,8 +91,8 @@ def get_data(user_id=None, username="Todos"):
                 emissions_mg = total_emissions * 1_000_000
                 energy_wh = total_energy * 1000
 
-                # Carregar um smartphone = ~8 Wh
-                smartphones = energy_wh / 8.0
+                # Carregar um smartphone = ~15 Wh (média moderna)
+                smartphones = energy_wh / 15.0
                 
                 carbon_data = {
                     'emissions_mg': round(emissions_mg, 2),

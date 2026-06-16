@@ -16,7 +16,7 @@ try:
     # Referência de Sustentabilidade: Schwartz, R., et al. (2020). "Green AI."
     # Justifica a importância de mensurar e reportar a pegada de carbono (CO2) 
     # gerada pelo custo computacional de inferências contínuas de IA no client-side.
-    from codecarbon import EmissionsTracker as _ETracker
+    from codecarbon import OfflineEmissionsTracker as _ETracker
     _HAS_CARBON = True
 except ImportError:
     _HAS_CARBON = False

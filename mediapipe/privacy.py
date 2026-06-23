@@ -3,9 +3,6 @@ import numpy as np
 import config
 
 def apply_privacy_segmentation(frame, seg_mask, mode):
-    # Converte a máscara suave do MediaPipe em booleana para indexação direta.
-    # O uso de indexação numpy (frame[mask]) elimina multiplicações de ponto flutuante, 
-    # Garantir que a máscara seja estritamente 2D (H, W), eliminando possíveis canais unitários (H, W, 1)
     mask_bool = np.squeeze(seg_mask > 0.5)
 
     if mode == 'silhouette':

@@ -10,46 +10,39 @@ def show_config_window():
         rigidez    = var_rigidez.get()
         calibracao = var_calib.get()
         audio_alert = var_audio.get()
-        
-        # Define as variáveis de sensibilidade com base na seleção do usuário.
-        # O alerta dispara quando o desvio atinge a proporção definida pelo BAD_POSTURE_THRESHOLD
-        # em relação ao ângulo máximo permitido.
-        # Referência ergonômica: Método RULA (McAtamney & Corlett, 1993).
-        
+
         if rigidez == "Rigoroso":
             config.BAD_POSTURE_THRESHOLD = 0.60 # Fator de disparo: 40% do MAX_ANGLE
             
-            # Ombros: Dispara em 2.0° (Simetria anatômica ideal de Ruivo et al.)
+            # Ombros: Dispara em 2.0°
             config.MAX_ANGLE_SHOULDER = 5.0  
-            # Pescoço: Dispara em 3.2° (Ultrassensível para reeducação)
+            # Pescoço: Dispara em 3.2° 
             config.MAX_ANGLE_NECK = 8.0      
-            # Head Roll: Dispara em 2.0° (Média populacional assintomática)
+            # Head Roll: Dispara em 2.0° 
             config.MAX_HEAD_ROLL_ANGLE = 5.0
-            # FHP 2D (Proxy CVA - Lima et al., 2023): Penaliza desvios verticais em 10%
+            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 10%
             config.MAX_RATIO_DEVIATION = 0.10
             
         elif rigidez == "Relaxado":
             config.BAD_POSTURE_THRESHOLD = 0.35 # Fator de disparo: 65% do MAX_ANGLE
-            
-            # Ombros: Dispara em 9.75° (Alerta apenas perto da zona de perigo clínico > 10°)
+            # Ombros: Dispara em 9.75° 
             config.MAX_ANGLE_SHOULDER = 15.0 
-            # Pescoço: Dispara em 16.25° (Permite movimentos amplos)
+            # Pescoço: Dispara em 16.25° 
             config.MAX_ANGLE_NECK = 25.0     
-            # Head Roll: Dispara em 9.75° (Tolerância máxima de software antes do alerta)
+            # Head Roll: Dispara em 9.75° 
             config.MAX_HEAD_ROLL_ANGLE = 15.0
-            # FHP 2D (Proxy CVA - Lima et al., 2023): Penaliza desvios verticais em 20%
+            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 20%
             config.MAX_RATIO_DEVIATION = 0.20
             
         else: # Normal
             config.BAD_POSTURE_THRESHOLD = 0.50 # Fator de disparo: 50% do MAX_ANGLE
-            
-            # Ombros: Dispara em 5.0° (Preventivo: no meio da zona de Atenção da Fotogrametria 2°-10°)
+            # Ombros: Dispara em 5.0° 
             config.MAX_ANGLE_SHOULDER = 10.0 
-            # Pescoço: Dispara em 7.5° (Filtra oscilações para impor a simetria binária 0° da ISO 11226)
+            # Pescoço: Dispara em 7.5° 
             config.MAX_ANGLE_NECK = 15.0     
-            # Head Roll: Dispara em 4.0° (Ignora micro-oscilações naturais 2°±1.5°, pune inclinações viciosas)
+            # Head Roll: Dispara em 4.0° 
             config.MAX_HEAD_ROLL_ANGLE = 8.0 
-            # FHP 2D (Proxy CVA - Lima et al., 2023): Penaliza desvios verticais em 15%
+            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 15%
             config.MAX_RATIO_DEVIATION = 0.15
             
         config.CURRENT_RIGIDITY = rigidez
@@ -63,15 +56,12 @@ def show_config_window():
             config.BASE_ANGLE_NECK = 0.0
             config.BASE_SLUMP = 1.22
             config.BASE_PITCH = -0.05
-            # Não salvamos no banco de dados para não sobrescrever a calibração manual do usuário.
-            # O banco de dados preserva a última calibração real, enquanto a sessão atual usa o padrão.
         elif calibracao in ["Calibrar Manualmente", "Recalibrar Manualmente"]:
             config.IS_CALIBRATED = False
             calibracao = "Calibrar Manualmente"
         elif calibracao == "Manter Calibração Atual":
             config.IS_CALIBRATED = True
             calibracao = "Calibrar Manualmente"
-            
 
         if config.CURRENT_USER_ID:
             db.save_preferences(config.CURRENT_USER_ID, rigidez, calibracao, audio_alert)

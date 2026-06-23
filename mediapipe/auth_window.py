@@ -11,7 +11,6 @@ def show_auth_window() -> int:
 
     result = {"user_id": None, "username": None}
 
-    # ── helpers ──────────────────────────────────────────────────────────────
     def _set_status(label: ctk.CTkLabel, msg: str, color: str = "#ef4444"):
         label.configure(text=msg, text_color=color)
 
@@ -53,7 +52,7 @@ def show_auth_window() -> int:
         result["username"] = username
         root.destroy()
 
-    # ── janela ───────────────────────────────────────────────────────────────
+    # janela
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
@@ -90,7 +89,7 @@ def show_auth_window() -> int:
     tabs.add("Criar Conta")
     tabs._segmented_button.configure(font=ctk.CTkFont(size=14, weight="bold"))
 
-    # ── Aba Login ────────────────────────────────────────────────────────────
+    # login
     lf = tabs.tab("Entrar")
 
     ctk.CTkLabel(lf, text="Nome de usuario",
@@ -120,7 +119,7 @@ def show_auth_window() -> int:
                   fg_color="#1d4ed8", hover_color="#2563eb").pack(
         fill="x", padx=4, pady=(12, 0))
 
-    # ── Aba Cadastro ─────────────────────────────────────────────────────────
+    # cadastro
     rf = tabs.tab("Criar Conta")
 
     ctk.CTkLabel(rf, text="Nome de usuario",

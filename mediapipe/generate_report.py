@@ -315,7 +315,7 @@ def generate_html(data, username: str = "Todos"):
             <h3 style="color:var(--a1);margin-bottom:1.5rem;text-align:center;
                        font-weight:600;text-transform:uppercase;letter-spacing:2px;">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                Embasamento Clínico e Biomecânico
+                Embasamento Clínico
             </h3>
             
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem; text-align:left;">
@@ -327,8 +327,8 @@ def generate_html(data, username: str = "Todos"):
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
                         <strong>Referência (Ground Truth):</strong> CVA ≥ 50°.<br>
-                        Considerado normal quando superior a 50°, e severo abaixo de 30°. Valores menores que 48° implicam maior ocorrência de forward head posture e dores cervicais.<br><br>
-                        <span style="font-size:0.75rem; color:var(--muted);">LIMA, B. M. G. et al. Assessment of forward head posture and ergonomics. Scientific Reports, 2023.<br>YIP, C. H. et al. The relationship between head posture and severity and disability of patients with neck pain. Manual Therapy, 2008.</span>
+                        Considerado normal quando superior a 50°, e severo abaixo de 30°. Valores menores que 50° implicam maior ocorrência de forward head posture e dores cervicais.<br><br>
+                        <span style="font-size:0.75rem; color:var(--muted);">YIP, C. H. T.; CHIU, T. T. W.; POON, A. T. K. The relationship between head posture and severity and disability of patients with neck pain. <em>Manual Therapy</em>, v. 13, n. 2, p. 148-154, 2008.<br>RUIVO, R. M.; PEZARAT-CORREIA, P.; CARITA, A. I. Cervical and shoulder postural assessment of adolescents. <em>Brazilian Journal of Physical Therapy</em>, v. 18, n. 4, 2014.</span>
                     </p>
                 </div>
 
@@ -338,9 +338,9 @@ def generate_html(data, username: str = "Todos"):
                         <strong>Métrica:</strong> Avaliação postural do eixo espinhal a partir de imagens 2D. A OSHA e a ISO 11226 exigem que os ombros e a cabeça permaneçam simétricos. O sistema utiliza limiares baseados nas heurísticas clínicas da SOSORT para tolerância anatômica (≤2°), zona de fadiga (2° a 10°) e perigo de desvio estrutural (>10°).
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
-                        <strong>Referência (Ground Truth):</strong> Assimetria populacional natural de ~1.2°.<br>
-                        "A postura aceitável do tronco é a ausência de rotação axial ou flexão lateral." A avaliação por IA no plano frontal atua como triagem.<br><br>
-                        <span style="font-size:0.75rem; color:var(--muted);">KIM, et al. ArXiv:2512.12718. Postural evaluation and spinal axis tracking from 2D images. 2025.<br>RUIVO, R. M. et al. Cervical and shoulder postural assessment of adolescents between 15 and 17 years old. 2014.<br>SOSORT - Society on Scoliosis Orthopaedic and Rehabilitation Treatment Guidelines.<br>ISO 11226:2000 — Ergonomics: Evaluation of static working postures.</span>
+                        <strong>Referência (Ground Truth):</strong> Limiares heurísticos adaptados de diretrizes de assimetria (SOSORT): ≤ 2° normal, 2– 10° atenção, >10° perigo.<br>
+                        A avaliação da assimetria escapular por fotogrametria 2D é validada pelo método de extração de ângulos do Projeto SAPO.<br><br>
+                        <span style="font-size:0.75rem; color:var(--muted);">FERREIRA, E. A. G. et al. Postural Assessment Software (PAS/SAPO): Validation and reliability. <em>Clinics</em>, v. 65, n. 7, p. 675-681, 2010.<br>SOSORT — Society on Scoliosis Orthopaedic and Rehabilitation Treatment Guidelines.<br>ISO 11226:2000 — Ergonomics: Evaluation of static working postures.</span>
                     </p>
                 </div>
 

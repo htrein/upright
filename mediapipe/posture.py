@@ -195,7 +195,7 @@ def evaluate_posture(lm, fw, fh):
     # Cabeça (Inclinação Lateral / Head Roll)
     # Referências Clínicas: ISO 11226:2000 (Princípio de Simetria) e Kapandji
     # (Fisiologia Articular, v.3). Kapandji define a amplitude total (ROM) do
-    # pescoço. Os limiares de software (4° a 15°) garantem a permanência na
+    # pescoço. Os limiares de software (5° a 15°) garantem a permanência na
     # "zona neutra" segura, prevenindo o desgaste dos discos cervicais.
     # Métrica de Engenharia: Média do alinhamento horizontal ocular, auricular e
     # bucal para redução de ruído (jitter).

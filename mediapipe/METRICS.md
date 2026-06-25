@@ -45,7 +45,7 @@ As métricas são avaliadas utilizando uma calibração base (posição inicial 
 ## 4. Cabeça (Inclinação Lateral / Head Roll)
 
 - **Pontos usados:** Olhos (2, 5), Orelhas (7, 8) e Boca (9, 10).
-- **Referências Científicas:** **ISO 11226** (Princípio de Simetria) e **Kapandji** (Fisiologia Articular). Limiares curtos (4° a 15°) são usados para garantir permanência na "zona neutra" segura, prevenindo o desgaste dos discos cervicais.
+- **Referências Científicas:** **ISO 11226** (Princípio de Simetria) e **Kapandji** (Fisiologia Articular). Limiares curtos (5° a 15°) são usados para garantir permanência na "zona neutra" segura, prevenindo o desgaste dos discos cervicais.
 - **Cálculo:** Média dos ângulos horizontais oculares, auriculares e bucais, ajudando a reduzir o ruído (*jitter*). O valor é comparado com o rolamento base calibrado (`BASE_HEAD_ROLL`).
 
 ---

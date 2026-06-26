@@ -1,18 +1,13 @@
 import collections
 
-# Definido em runtime pelo argumento --gpu / --cpu (padrão: CPU para máxima compatibilidade)
+# Definido em runtime pelo argumento --gpu / --cpu (padrão: CPU)
 USE_GPU = False
 
 VISIBILITY_THRESHOLD = 0.5  # Confiança mínima (0 a 1) do MediaPipe
 
-# Filtro Passa-Baixa
-# Referência: Winter, D. A. (2009). Biomechanics and Motor Control of Human Movement.
-# Este filtro suaviza tremores de tracking e oscilações articulares invisíveis a olho nu,
-# garantindo que o alerta não dispare por causa de micro-movimentos.
+# Este filtro suaviza tremores 
 EMA_ALPHA = 0.25            
 
-# Janela de Postura Estática (ISO 11226)
-# A ISO classifica posturas como prejudiciais quando mantidas por vários segundos.
 # O sistema avalia a sustentação da má postura na janela móvel de 30 segundos.
 FPS_ESTIMATE = 30
 POSTURE_WINDOW_SEC = 30
@@ -20,13 +15,11 @@ POSTURE_WINDOW = POSTURE_WINDOW_SEC * FPS_ESTIMATE
 LOG_INTERVAL_FRAMES = 30   
 
 # Estas variáveis podem ser alteradas pela tela de configuração ou pela calibração
-# O disparo do alerta ocorre quando (score < THRESHOLD).
-# Sendo score = 1.0 - (angle / MAX_ANGLE), o alerta dispara no ângulo = MAX_ANGLE * (1.0 - THRESHOLD).
 BAD_POSTURE_THRESHOLD = 0.50 
 MAX_ANGLE_SHOULDER = 10.0 
 MAX_ANGLE_NECK = 15.0    
-BASE_SLUMP = 0.0          # Distância vertical Ombros -> Olhos (Calibrado em runtime)
-BASE_PITCH = 0.0          # Distância vertical Orelhas -> Nariz (Calibrado em runtime)
+BASE_SLUMP = 0.0          # (Calibrado em runtime)
+BASE_PITCH = 0.0          # (Calibrado em runtime)
 MAX_HEAD_ROLL_ANGLE = 8.0 
 MAX_RATIO_DEVIATION = 0.15 
 

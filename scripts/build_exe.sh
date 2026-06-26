@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# =============================================================================
-# build_exe.sh — Gera um executável único do Upright Posture Tracking
-# usando PyInstaller dentro do ambiente conda especificado.
-#
-# Uso:
-#   ./scripts/build_exe.sh [conda_env_name]
-#
-# O executável será gerado em: dist/upright
-# =============================================================================
 set -euo pipefail
 
 ENV_NAME="${1:-mp_fix}"

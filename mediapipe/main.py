@@ -1,8 +1,6 @@
 import cv2
 import os
 import argparse
-# Referência do Modelo de ML: Bazarevsky, V., et al. (2020). "BlazePose: On-device Real-time Body Pose tracking."
-# Documenta como a rede neural extrai coordenadas corporais em tempo real com alta precisão.
 import mediapipe as mp
 import numpy as np
 import db
@@ -13,9 +11,6 @@ import posture
 import privacy
 import hud
 try:
-    # Referência de Sustentabilidade: Schwartz, R., et al. (2020). "Green AI."
-    # Justifica a importância de mensurar e reportar a pegada de carbono (CO2) 
-    # gerada pelo custo computacional de inferências contínuas de IA no client-side.
     from codecarbon import OfflineEmissionsTracker as _ETracker
     _HAS_CARBON = True
 except ImportError:
@@ -72,19 +67,19 @@ def main():
             config.MAX_ANGLE_SHOULDER = 5.0  
             config.MAX_ANGLE_NECK = 8.0      
             config.MAX_HEAD_ROLL_ANGLE = 5.0
-            config.MAX_RATIO_DEVIATION = 0.10  # FHP 2D (proxy CVA): penaliza desvios verticais em 10%
+            config.MAX_RATIO_DEVIATION = 0.10  # penaliza desvios verticais em 10%
         elif config.CURRENT_RIGIDITY == 'Relaxado':
             config.BAD_POSTURE_THRESHOLD = 0.35 # Fator de disparo: 65% do MAX_ANGLE
             config.MAX_ANGLE_SHOULDER = 15.0 
             config.MAX_ANGLE_NECK = 25.0     
             config.MAX_HEAD_ROLL_ANGLE = 15.0
-            config.MAX_RATIO_DEVIATION = 0.20  # FHP 2D (proxy CVA): penaliza desvios verticais em 20%
+            config.MAX_RATIO_DEVIATION = 0.20  # penaliza desvios verticais em 20%
         else: # Normal
             config.BAD_POSTURE_THRESHOLD = 0.50 # Fator de disparo: 50% do MAX_ANGLE
             config.MAX_ANGLE_SHOULDER = 10.0 
             config.MAX_ANGLE_NECK = 15.0     
             config.MAX_HEAD_ROLL_ANGLE = 8.0
-            config.MAX_RATIO_DEVIATION = 0.15  # FHP 2D (proxy CVA): penaliza desvios verticais em 15%
+            config.MAX_RATIO_DEVIATION = 0.15  # penaliza desvios verticais em 15%
             
         if config.CURRENT_CALIB_MODE == 'Usar Padrao do Sistema':
             config.BASE_ANGLE_SHOULDER = 0.0
@@ -221,7 +216,7 @@ def main():
                     
                     if res.pose_landmarks and len(res.pose_landmarks) > 0:
                         lm_list = res.pose_landmarks[0]
-                        # A função avalia a postura e já embute o slump_ratio e pitch_ratio no dicionário
+                        # A função avalia a postura e já coloca o slump_ratio e pitch_ratio no dicionário
                         dicionario_postura, desenhos_extras, ang_ombro_cru, _, ang_roll_cru, ang_pescoco_cru = posture.evaluate_posture(lm_list, fw, fh)
                         
                         if config.PRIVACY_MODE and seg_result.confidence_masks:
@@ -232,7 +227,6 @@ def main():
                         posture.draw_posture_lines(frame, dicionario_postura, desenhos_extras)
 
                         if config.IS_CALIBRATED:
-                            # Soma os itens do dicionário usando um loop simples em vez de list comprehension (estilo amador)
                             soma_notas = 0.0
                             qtd_itens = 0
                             for item in dicionario_postura.values():
@@ -377,7 +371,7 @@ def main():
                     cv2.destroyAllWindows()
                     cv2.waitKey(1)
                     show_config_window()
-                    time.sleep(0.2)  # Delay para o gerenciador do Wayland/Gnome processar a destruição do Tkinter
+                    time.sleep(0.2)  
                     cv2.namedWindow("Upright Mediapipe", cv2.WINDOW_GUI_NORMAL | cv2.WINDOW_NORMAL)
                     cv2.setWindowProperty("Upright Mediapipe", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
                     fullscreen_set = False

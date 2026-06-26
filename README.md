@@ -1,4 +1,4 @@
-# 🧍 Upright — Posture Tracking em Tempo Real
+# Upright
 
 **Upright** é um sistema de monitoramento de postura corporal em tempo real que usa a câmera do computador para detectar má postura (ombros caídos, pescoço inclinado/projetado para frente) e gerar alertas visuais instantâneos, além de registrar um histórico de sessões no banco de dados local.
 
@@ -24,14 +24,6 @@
 ---
 
 ## Compatibilidade
-
-| Funcionalidade | Linux ✅ | Windows ⚠️ | macOS ⚠️ |
-|---|---|---|---|
-| Rastreamento de postura (CPU) | ✅ | ✅ | ✅ |
-| Rastreamento de postura (GPU) | ✅ | ❌ | ❌ |
-| Modo fullscreen | ✅ | ✅ | ⚠️ Pode ter bugs |
-| Scripts `.sh` nativos | ✅ | ❌ (usar Git Bash/WSL) | ✅ |
-| Histórico e relatórios | ✅ | ✅ | ✅ |
 
 ### Linux (recomendado)
 Suporte completo, incluindo aceleração por GPU via OpenGL ES (NVIDIA/AMD). Testado em Ubuntu 22.04+.
@@ -197,7 +189,7 @@ O executável será gerado em: `dist/upright`
 ./dist/upright --gpu
 ```
 
-### ⚠️ Avisos importantes sobre executáveis
+### Avisos importantes sobre executáveis
 
 - O executável gerado é **específico para o sistema operacional** onde foi buildado. Um executável Linux **não roda** no Windows e vice-versa.
 - O arquivo `posture_history.db` (banco de dados) e a pasta `models/` são lidos/criados **no mesmo diretório de onde o executável for executado**.

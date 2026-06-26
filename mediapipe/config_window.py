@@ -20,7 +20,7 @@ def show_config_window():
             config.MAX_ANGLE_NECK = 8.0      
             # Head Roll: Dispara em 2.0° 
             config.MAX_HEAD_ROLL_ANGLE = 5.0
-            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 10%
+            #Penaliza desvios verticais em 10%
             config.MAX_RATIO_DEVIATION = 0.10
             
         elif rigidez == "Relaxado":
@@ -31,7 +31,7 @@ def show_config_window():
             config.MAX_ANGLE_NECK = 25.0     
             # Head Roll: Dispara em 9.75° 
             config.MAX_HEAD_ROLL_ANGLE = 15.0
-            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 20%
+            #Penaliza desvios verticais em 20%
             config.MAX_RATIO_DEVIATION = 0.20
             
         else: # Normal
@@ -42,7 +42,7 @@ def show_config_window():
             config.MAX_ANGLE_NECK = 15.0     
             # Head Roll: Dispara em 4.0° 
             config.MAX_HEAD_ROLL_ANGLE = 8.0 
-            # FHP 2D (Proxy CVA - Yip et al., 2008 | Ruivo et al., 2014): Penaliza desvios verticais em 15%
+            #Penaliza desvios verticais em 15%
             config.MAX_RATIO_DEVIATION = 0.15
             
         config.CURRENT_RIGIDITY = rigidez

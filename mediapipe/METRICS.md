@@ -10,7 +10,7 @@ As métricas são avaliadas utilizando uma calibração base (posição inicial 
 - **Pontos usados:** Landmarks 11 (Ombro Esquerdo) e 12 (Ombro Direito).
 - **Referências Científicas:**
   - O cálculo da assimetria de ombros no plano frontal é embasado na fotogrametria clássica, onde a extração bidimensional do ângulo absoluto entre os acrômios indica o desvio postural da cintura escapular.
-- **Limiares Clínicos (Adaptação heurística inspirada em diretrizes de assimetria, como SOSORT):**
+- **Limiares heurísticos do software (faixas de referência adotadas pelo projeto, inspiradas na avaliação clínica de assimetria postural):**
   - **<= 2°**: Normal (Tolerância anatômica)
   - **2° a 10°**: Atenção (Assimetria tônica ou fadiga postural)
   - **> 10°**: Perigo (Indicador clínico que exige investigação para desvios estruturais como escoliose).
@@ -21,7 +21,7 @@ As métricas são avaliadas utilizando uma calibração base (posição inicial 
 ## 2. Pescoço (Desvio Lateral)
 
 - **Pontos usados:** Landmark 0 (Nariz) e o ponto médio entre 11 e 12 (Centro do Pescoço/Tronco).
-- **Referências Científicas:** Inspirado no método **RULA** e **ISO 11226**. O RULA penaliza (+1 score) qualquer flexão lateral do pescoço, enquanto a ISO 11226 estabelece limite estrito de 10° para inclinação estática. No software, adota-se um limiar heurístico (~15°) para equilibrar tolerância prática e fadiga de alertas.
+- **Referências Científicas:** Inspirado no método **RULA** e na **ISO 11226**. O RULA penaliza (+1 no score) qualquer flexão lateral do pescoço, e a ISO 11226 recomenda a manutenção da simetria postural com limites para inclinações cervicais estáticas. No software, adota-se um limiar heurístico (~15°) para equilibrar tolerância prática e fadiga de alertas.
 - **Cálculo:** Ângulo do vetor formado pelo Nariz e o Centro do Pescoço em relação à vertical. O desvio é calculado em relação à calibração inicial (`BASE_ANGLE_NECK`).
 
 ---
@@ -53,7 +53,7 @@ As métricas são avaliadas utilizando uma calibração base (posição inicial 
 ## Suavização e Feedback Visual
 
 Para evitar alertas falsos ou oscilações devido ao ruído da câmera e movimentos curtos:
-- **EMA (Exponential Moving Average):** Todas as pontuações brutas passam por uma suavização temporal, filtro passa-baixa com fundamento em **Winter (2009)**, que estabelece a filtragem de ruído cinemático como mandatória na biomâcnica computacional.
+- **EMA (Exponential Moving Average):** Todas as pontuações brutas passam por uma suavização temporal, filtro passa-baixa com fundamento em **Winter (2009)**, que estabelece a filtragem de ruído cinemático como mandatória na biomecânica computacional.
 - **Alertas e Setas:** Quando um desvio considerável é detectado, o HUD utiliza setas vetoriais para guiar visualmente o usuário a corrigir a postura exata (ex: baixar o queixo, esticar as costas, nivelar os ombros).
 
 ---
@@ -72,8 +72,8 @@ Para evitar alertas falsos ou oscilações devido ao ruído da câmera e movimen
 
 **RUIVO, R. M.; PEZARAT-CORREIA, P.; CARITA, A. I.** Cervical and shoulder postural assessment of adolescents between 15 and 17 years old and association with upper quadrant pain. *Brazilian Journal of Physical Therapy*, São Carlos, v. 18, n. 4, p. 364-371, ago. 2014.
 
-**SOCIETY ON SCOLIOSIS ORTHOPAEDIC AND REHABILITATION TREATMENT (SOSORT).** *SOSORT Guidelines*: Orthopaedic and Rehabilitation Treatment of Idiopathic Scoliosis during Growth.
+**NEGRINI, S. et al.** 2016 SOSORT guidelines: orthopaedic and rehabilitation treatment of idiopathic scoliosis during growth. *Scoliosis and Spinal Disorders*, v. 13, art. 3, 2018.
 
 **WINTER, D. A.** *Biomechanics and Motor Control of Human Movement*. 4. ed. Hoboken: John Wiley & Sons, 2009.
 
-**YIP, C. H. T.; CHIU, T. T. W.; POON, A. T. K.** The relationship between head posture and severity and disability of patients with neck pain. *Manual Therapy*, Edinburgh, v. 13, n. 2, p. 148-154, abr. 2008.
+**YIP, C. H. T.; CHIU, T. T. W.; POON, A. T. K.** The relationship between head posture and severity and disability of patients with neck pain. *Manual Therapy*, Edinburgh, v. 13, n. 2, p. 148-154, maio 2008.

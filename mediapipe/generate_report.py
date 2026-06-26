@@ -335,12 +335,12 @@ def generate_html(data, username: str = "Todos"):
                 <div style="background: rgba(15,23,42,0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                     <h4 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.1rem;">Assimetria de Ombros e Head Roll</h4>
                     <p style="color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:1rem;">
-                        <strong>Métrica:</strong> Avaliação postural do eixo espinhal a partir de imagens 2D. A OSHA e a ISO 11226 exigem que os ombros e a cabeça permaneçam simétricos. O sistema utiliza limiares baseados nas heurísticas clínicas da SOSORT para tolerância anatômica (≤2°), zona de fadiga (2° a 10°) e perigo de desvio estrutural (>10°).
+                        <strong>Métrica:</strong> Avaliação postural do eixo espinhal a partir de imagens 2D. A ISO 11226 recomenda que os ombros e a cabeça permaneçam simétricos. O sistema utiliza faixas heurísticas próprias para tolerância anatômica (≤2°), zona de fadiga (2° a 10°) e perigo de desvio estrutural (>10°).
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
-                        <strong>Referência (Ground Truth):</strong> Limiares heurísticos adaptados de diretrizes de assimetria (SOSORT): ≤ 2° normal, 2– 10° atenção, >10° perigo.<br>
+                        <strong>Referência (Ground Truth):</strong> Faixas heurísticas próprias do projeto para assimetria de ombros: ≤ 2° normal, 2–10° atenção, >10° perigo.<br>
                         A avaliação da assimetria escapular por fotogrametria 2D é validada pelo método de extração de ângulos do Projeto SAPO.<br><br>
-                        <span style="font-size:0.75rem; color:var(--muted);">FERREIRA, E. A. G. et al. Postural Assessment Software (PAS/SAPO): Validation and reliability. <em>Clinics</em>, v. 65, n. 7, p. 675-681, 2010.<br>SOSORT — Society on Scoliosis Orthopaedic and Rehabilitation Treatment Guidelines.<br>ISO 11226:2000 — Ergonomics: Evaluation of static working postures.</span>
+                        <span style="font-size:0.75rem; color:var(--muted);">FERREIRA, E. A. G. et al. Postural Assessment Software (PAS/SAPO): Validation and reliability. <em>Clinics</em>, v. 65, n. 7, p. 675-681, 2010.<br>NEGRINI, S. et al. 2016 SOSORT guidelines. <em>Scoliosis and Spinal Disorders</em>, v. 13, art. 3, 2018.<br>ISO 11226:2000 — Ergonomics: Evaluation of static working postures.</span>
                     </p>
                 </div>
 

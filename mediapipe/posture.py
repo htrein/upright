@@ -66,8 +66,8 @@ def evaluate_posture(lm, fw, fh):
     # embasado na fotogrametria clássica (Ferreira et al., 2010), onde a extração
     # bidimensional do ângulo absoluto entre os acrômios indica o desvio postural
     # da cintura escapular.
-    # Limiares de Alerta (Adaptação heurística inspirada em diretrizes de assimetria,
-    # como SOSORT):
+    # Limiares de Alerta (faixas heurísticas do projeto, inspiradas na avaliação
+    # clínica de assimetria postural):
     #   <= 2°    : Normal (Tolerância anatômica)
     #   2° a 10° : Atenção (Assimetria tônica ou fadiga postural)
     #   > 10°    : Perigo (Indicador clínico que exige investigação para desvios
@@ -90,9 +90,9 @@ def evaluate_posture(lm, fw, fh):
 
     # Pescoço (Desvio Lateral)
     # Referência Ergonômica: Inspirado no método RULA (McAtamney & Corlett, 1993)
-    # e ISO 11226:2000. O RULA penaliza (+1 score) qualquer flexão lateral do
-    # pescoço, enquanto a ISO 11226 estabelece limite estrito de 10° para
-    # inclinação estática.
+    # e ISO 11226:2000. O RULA penaliza (+1 no score) qualquer flexão lateral do
+    # pescoço, e a ISO 11226 recomenda a manutenção da simetria postural com
+    # limites para inclinações cervicais estáticas.
     # Limiar do Código (config.MAX_ANGLE_NECK): Adota-se 15° como limiar heurístico
     # de software para equilibrar a tolerância prática com a fadiga de alertas.
     if valid(0) and valid(11) and valid(12):

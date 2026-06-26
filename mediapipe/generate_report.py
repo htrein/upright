@@ -321,9 +321,9 @@ def generate_html(data, username: str = "Todos"):
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem; text-align:left;">
                 
                 <div style="background: rgba(15,23,42,0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                    <h4 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.1rem;">Postura Anterior da Cabeça (FHP Z-Proxy)</h4>
+                    <h4 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.1rem;">Postura Anterior da Cabeça (FHP — Proxy 2D)</h4>
                     <p style="color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:1rem;">
-                        <strong>Métrica:</strong> Aferição Pseudo-3D da profundidade do pescoço em relação aos ombros, utilizando a coordenada Z da rede neural. Dribla a ilusão de ótica da perspectiva 2D ("foreshortening") e detecta projeções autênticas da cabeça em direção à tela. É normalizada dinamicamente pela largura do usuário para ignorar se a pessoa apenas aproximou a cadeira.
+                        <strong>Métrica:</strong> Proxy 2D para o Ângulo Craniovertebral (CVA), calculado apenas com as coordenadas (X, Y) — o eixo de profundidade (Z) é ignorado. Combina dois indicadores verticais normalizados pela largura dos ombros: o desabamento (distância vertical ombros–olhos, que encolhe quando o pescoço curva para frente) e a inclinação do queixo (distância vertical orelhas–nariz). A normalização pela largura do usuário evita falsos positivos quando a pessoa apenas aproxima a cadeira.
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
                         <strong>Referência (Ground Truth):</strong> CVA ≥ 50°.<br>
@@ -370,10 +370,10 @@ def generate_html(data, username: str = "Todos"):
                 <div style="background: rgba(15,23,42,0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                     <h4 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.1rem;">Score Global e Thresholds</h4>
                     <p style="color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:1rem;">
-                        <strong>Métrica:</strong> Uma média ponderada consolidando a avaliação de todos os eixos. Serve como uma nota de saúde postural geral (de 0 a 100%). Os limiares de penalidade (BAD_POSTURE_THRESHOLD) são baseados na adição progressiva de risco.
+                        <strong>Métrica:</strong> Uma média aritmética simples (sem pesos) das notas individuais (ombros, pescoço e cabeça). Serve como uma nota de saúde postural geral (de 0 a 100%). O alerta dispara quando essa média cai abaixo do limiar do perfil (BAD_POSTURE_THRESHOLD).
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
-                        <strong>Cálculo Interno:</strong> É calculado a partir da média normalizada. A penalidade cruzada segue a lógica do Método RULA, onde pequenos desvios da zona neutra já somam risco, justificando o disparo rápido em perfis rigorosos.<br><br>
+                        <strong>Cálculo Interno:</strong> É a média aritmética das notas por componente. Por ser uma média, um único desvio acentuado pode ser diluído quando os demais componentes permanecem próximos de 1,0 — por isso perfis mais rigorosos reduzem os limiares angulares para antecipar o disparo.<br><br>
                         <span style="font-size:0.75rem; color:var(--muted);">McATAMNEY, L.; CORLETT, E. N. RULA: a survey method for the investigation of work-related upper limb disorders. Applied Ergonomics, 1993.</span>
                     </p>
                 </div>
@@ -381,7 +381,7 @@ def generate_html(data, username: str = "Todos"):
                 <div style="background: rgba(15,23,42,0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
                     <h4 style="color:var(--txt); margin-bottom:0.5rem; font-size:1.1rem;">Limites de Fisiologia Articular</h4>
                     <p style="color:var(--muted); font-size:0.9rem; line-height:1.5; margin-bottom:1rem;">
-                        <strong>Métrica:</strong> Os limites máximos de ângulo tolerados no software (ex: 4° a 15°) representam a "zona neutra" segura da articulação.
+                        <strong>Métrica:</strong> Os limites máximos de ângulo tolerados no software (ex.: 5° a 15°) representam a "zona neutra" segura da articulação.
                     </p>
                     <p style="color:rgba(56,189,248,0.9); font-size:0.85rem; font-style:italic;">
                         <strong>Referência (Ground Truth):</strong> A amplitude total de movimento (ROM - Range of Motion) fisiológica do pescoço permite movimentos amplos, mas manter-se na zona neutra inicial previne o desgaste precoce dos discos cervicais em trabalhos de escritório.<br><br>

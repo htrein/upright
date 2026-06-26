@@ -72,19 +72,19 @@ def main():
             config.MAX_ANGLE_SHOULDER = 5.0  
             config.MAX_ANGLE_NECK = 8.0      
             config.MAX_HEAD_ROLL_ANGLE = 5.0
-            config.MAX_RATIO_DEVIATION = 0.15
+            config.MAX_RATIO_DEVIATION = 0.10  # FHP 2D (proxy CVA): penaliza desvios verticais em 10%
         elif config.CURRENT_RIGIDITY == 'Relaxado':
             config.BAD_POSTURE_THRESHOLD = 0.35 # Fator de disparo: 65% do MAX_ANGLE
             config.MAX_ANGLE_SHOULDER = 15.0 
             config.MAX_ANGLE_NECK = 25.0     
             config.MAX_HEAD_ROLL_ANGLE = 15.0
-            config.MAX_RATIO_DEVIATION = 0.30
+            config.MAX_RATIO_DEVIATION = 0.20  # FHP 2D (proxy CVA): penaliza desvios verticais em 20%
         else: # Normal
             config.BAD_POSTURE_THRESHOLD = 0.50 # Fator de disparo: 50% do MAX_ANGLE
             config.MAX_ANGLE_SHOULDER = 10.0 
             config.MAX_ANGLE_NECK = 15.0     
-            config.MAX_HEAD_ROLL_ANGLE = 8.0 
-            config.MAX_RATIO_DEVIATION = 0.20
+            config.MAX_HEAD_ROLL_ANGLE = 8.0
+            config.MAX_RATIO_DEVIATION = 0.15  # FHP 2D (proxy CVA): penaliza desvios verticais em 15%
             
         if config.CURRENT_CALIB_MODE == 'Usar Padrao do Sistema':
             config.BASE_ANGLE_SHOULDER = 0.0

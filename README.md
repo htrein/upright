@@ -4,6 +4,10 @@
 
 > Versão atual: **1.0** · Python 3.10 · MediaPipe Tasks API · SQLite3
 
+<div align="center">
+  <img src="exemplo.png" alt="Exemplo de uso do Upright" width="80%">
+</div>
+
 ---
 
 ## Índice
@@ -20,6 +24,7 @@
 10. [Dependências](#dependências)
 11. [Banco de dados](#banco-de-dados)
 12. [Troubleshooting](#troubleshooting)
+13. [Documentação e Artefatos](#documentação-e-artefatos)
 
 ---
 
@@ -276,3 +281,29 @@ O app usa **SQLite3** local, sem servidor. O arquivo `posture_history.db` é cri
 | `posture_logs` | Score de postura registrado a cada ~1s por sessão |
 
 > O banco é criado localmente e **nenhum dado é enviado para a internet**.
+
+---
+
+## Documentação e Artefatos
+
+### Apresentações (Pitches)
+- [Pitch de proposta (PDF)](Pitch%20de%20proposta.pdf)
+- [Pitch Médio (PDF)](Pitch%20Medio.pdf)
+- [Pitch Final 5min (PDF)](Pitch%20Final%205min.pdf)
+- [Pitch Final 10min (PDF)](Pitch%20Final%2010min.pdf)
+
+### Relatório Final
+- [Relatório Final (PDF)](Relatorio%20Final.pdf)
+
+### Diagramas do Sistema
+Os projetos originais do Astah estão disponíveis no repositório (`.asta`). Abaixo estão as exportações em imagem:
+
+#### Diagrama de Classes
+[Projeto Astah: diagrama_classes.asta](diagrama_classes.asta)
+<br>
+![Diagrama de Classes](diagrama_classes.png)
+
+#### Diagrama de Pacotes
+[Projeto Astah: diagrama_pacotes.asta](diagrama_pacotes.asta)
+<br>
+![Diagrama de Pacotes](diagrama_pacotes.png)

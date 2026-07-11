@@ -1,9 +1,16 @@
 import sqlite3
 import os
+import sys
 import hashlib
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posture_history.db')
+# Resolve APP_DIR: funciona em modo normal e como executável PyInstaller
+if getattr(sys, 'frozen', False):
+    _APP_DIR = os.path.dirname(sys.executable)
+else:
+    _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH = os.path.join(_APP_DIR, 'posture_history.db')
 
 def get_connection():
     return sqlite3.connect(DB_PATH)

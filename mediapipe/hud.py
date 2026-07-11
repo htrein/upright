@@ -10,21 +10,39 @@ def _get_font(size: int, bold: bool = False):
     key = (size, bold)
     if key in _font_cache:
         return _font_cache[key]
-    suffix_map = {
-        True:  ["Ubuntu-B.ttf", "LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"],
-        False: ["Ubuntu-R.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
-    }
-    dirs = [
-        "/usr/share/fonts/truetype/ubuntu",
-        "/usr/share/fonts/truetype/liberation",
-        "/usr/share/fonts/truetype/dejavu",
-    ]
-    for d, name in zip(dirs, suffix_map[bold]):
-        path = os.path.join(d, name)
+
+    import platform
+    _os = platform.system()
+
+    if _os == 'Windows':
+        # Fontes disponíveis nativamente no Windows
+        candidates = [
+            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts',
+                         'arialbd.ttf' if bold else 'arial.ttf'),
+            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts',
+                         'calibrib.ttf' if bold else 'calibri.ttf'),
+            os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts',
+                         'segoeuib.ttf' if bold else 'segoeui.ttf'),
+        ]
+    else:
+        # Linux / macOS
+        suffix_map = {
+            True:  ["Ubuntu-B.ttf", "LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf"],
+            False: ["Ubuntu-R.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf"],
+        }
+        dirs = [
+            "/usr/share/fonts/truetype/ubuntu",
+            "/usr/share/fonts/truetype/liberation",
+            "/usr/share/fonts/truetype/dejavu",
+        ]
+        candidates = [os.path.join(d, n) for d, n in zip(dirs, suffix_map[bold])]
+
+    for path in candidates:
         if os.path.exists(path):
             font = ImageFont.truetype(path, size)
             _font_cache[key] = font
             return font
+
     font = ImageFont.load_default()
     _font_cache[key] = font
     return font

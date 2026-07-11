@@ -214,7 +214,8 @@ def show_config_window():
         import generate_report as gr
         data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
         path = gr.generate_html(data, config.CURRENT_USERNAME if config.CURRENT_USERNAME else 'Todos')
-        webbrowser.open(f"file://{path}")
+        from pathlib import Path
+        webbrowser.open(Path(path).resolve().as_uri())
         
     def delete_account():
         win = ctk.CTkToplevel(root)

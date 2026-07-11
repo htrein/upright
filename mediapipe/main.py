@@ -1,5 +1,7 @@
 import cv2
 import os
+import sys
+import platform
 import argparse
 import mediapipe as mp
 import numpy as np
@@ -20,9 +22,17 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 def main():
+    # Resolve diretórios para modo normal e PyInstaller
+    if getattr(sys, 'frozen', False):
+        MODELS_DIR = sys._MEIPASS
+        APP_DIR = os.path.dirname(sys.executable)
+    else:
+        MODELS_DIR = os.path.dirname(os.path.abspath(__file__))
+        APP_DIR = MODELS_DIR
+
     parser = argparse.ArgumentParser(description="Upright Posture Tracking")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--gpu', action='store_true', help='Usa GPU para inferência (requer Linux com OpenGL ES)')
+    group.add_argument('--gpu', action='store_true', help='Usa GPU para inferência (requer suporte a OpenGL ES ou Metal)')
     group.add_argument('--cpu', action='store_true', help='Usa CPU para inferência (compatível com todos os sistemas)')
     args = parser.parse_args()
 
@@ -111,7 +121,7 @@ def main():
     if _HAS_CARBON:
         try:
             _tracker = _ETracker(project_name=f"upright_{config.CURRENT_USERNAME}", save_to_file=True,
-                                 output_dir=os.path.dirname(os.path.abspath(__file__)),
+                                 output_dir=APP_DIR,
                                  log_level="error",
                                  tracking_mode="process",
                                  country_iso_code="BRA")
@@ -119,12 +129,14 @@ def main():
         except Exception:
             _tracker = None
 
-    model_dir = os.path.join(os.path.dirname(__file__), 'models')
+    model_dir = os.path.join(MODELS_DIR, 'models')
     pose_model_path = os.path.join(model_dir, 'pose_landmarker_full.task')
     seg_model_path = os.path.join(model_dir, 'selfie_segmenter.tflite')
 
     if not os.path.exists(pose_model_path) or not os.path.exists(seg_model_path):
-        print("Modelos GPU não encontrados! Por favor rode 'scripts/download_mp_tasks.sh' primeiro.")
+        print("Modelos não encontrados! Por favor rode o script de download em 'scripts/':\n"
+              "  Linux/macOS: bash scripts/download_mp_tasks.sh\n"
+              "  Windows:     scripts\\download_mp_tasks.bat  (ou execute o .sh com Git Bash)")
         raise SystemExit(1)
 
     _delegate = python.BaseOptions.Delegate.GPU if config.USE_GPU else python.BaseOptions.Delegate.CPU
@@ -242,7 +254,19 @@ def main():
                             if is_bad_posture and not was_bad_posture:
                                 if getattr(config, 'AUDIO_ALERT_ENABLED', True):
                                     import threading
-                                    threading.Thread(target=lambda: os.system("paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null"), daemon=True).start()
+                                    def _play_alert():
+                                        _os = platform.system()
+                                        if _os == 'Windows':
+                                            try:
+                                                import winsound
+                                                winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                                            except Exception:
+                                                pass
+                                        elif _os == 'Darwin':
+                                            os.system("afplay /System/Library/Sounds/Ping.aiff 2>/dev/null")
+                                        else:  # Linux
+                                            os.system("paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null")
+                                    threading.Thread(target=_play_alert, daemon=True).start()
                             was_bad_posture = is_bad_posture
                                 
                             config._posture_history.append(nota_global < config.BAD_POSTURE_THRESHOLD)
@@ -357,7 +381,9 @@ def main():
                         data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
                         path = gr.generate_html(data, config.CURRENT_USERNAME)
                         print(f"Relatorio gerado: {path}")
-                        webbrowser.open(f"file://{path}")
+                        # pathlib garante URL correta em todos os SOs (file:///C:/... no Windows)
+                        from pathlib import Path
+                        webbrowser.open(Path(path).resolve().as_uri())
                     threading.Thread(target=_open_report, daemon=True).start()
                 elif key == ord('f'):
                     current = config.get_ema('is_fullscreen', 1.0)

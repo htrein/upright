@@ -6,8 +6,14 @@ import csv
 import webbrowser
 from datetime import datetime
 
-DB_PATH     = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posture_history.db')
-REPORT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'report.html')
+# Resolve APP_DIR: funciona em modo normal e como executável PyInstaller
+if getattr(sys, 'frozen', False):
+    _APP_DIR = os.path.dirname(sys.executable)
+else:
+    _APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_PATH     = os.path.join(_APP_DIR, 'posture_history.db')
+REPORT_PATH = os.path.join(_APP_DIR, 'report.html')
 
 def get_users():
     if not os.path.exists(DB_PATH):
@@ -589,4 +595,5 @@ if __name__ == "__main__":
         data = get_data(user_id, username)
         report_file = generate_html(data, username)
         print("Abrindo no navegador...")
-        webbrowser.open(f"file://{report_file}")
+        from pathlib import Path
+        webbrowser.open(Path(report_file).resolve().as_uri())

@@ -54,12 +54,30 @@ O delegate GPU usa Metal no macOS mas **não é oficialmente suportado** pela ve
 
 ---
 
-## Instalação
+## Instalação e Uso (Usuários Finais)
+
+A forma mais fácil de usar o Upright é baixando o executável pronto. **Você não precisa instalar Python nem linha de comando.**
+
+1. Acesse a página de **[Releases](https://github.com/htrein/upright/releases)** do projeto.
+2. Baixe o arquivo correspondente ao seu sistema:
+   - **Windows:** Baixe o arquivo `main.exe` (ou `upright-windows.exe`).
+   - **Linux:** Baixe o arquivo `main` (sem extensão, ou `upright-linux`).
+3. **Execute o aplicativo:**
+   - **No Windows:** Basta dar dois cliques no `.exe` baixado.
+   - **No Linux:** Abra o terminal na pasta onde baixou e dê permissão de execução: `chmod +x main`, em seguida rode com `./main`.
+
+> **Nota:** Na primeira vez que rodar, o aplicativo criará automaticamente um banco de dados local (`posture_history.db`) na mesma pasta onde o executável está localizado. Mantenha-o em uma pasta fixa (ex: Documentos ou Área de Trabalho).
+
+---
+
+## Para Desenvolvedores (Rodando do Código-Fonte)
+
+Se você deseja modificar o código ou rodar via terminal, siga os passos abaixo.
 
 ### 1. Clone o repositório
 
 ```bash
-git clone <url-do-repositório>
+git clone https://github.com/htrein/upright.git
 cd upright
 ```
 
@@ -71,51 +89,29 @@ conda env create -f environment-mediapipe.yml
 
 Esse comando cria o ambiente chamado `mediapipe` com todas as dependências Python necessárias (Python 3.10, OpenCV, MediaPipe, etc).
 
-> Se preferir usar um nome diferente para o ambiente, edite a linha `name:` no arquivo `environment-mediapipe.yml`.
-
 ### 3. Baixe os modelos de IA
 
 Os modelos de detecção não estão incluídos no repositório por serem arquivos grandes. Baixe-os com:
 
 ```bash
+# No Linux/macOS ou Git Bash do Windows
 chmod +x scripts/download_mp_tasks.sh
 ./scripts/download_mp_tasks.sh
 ```
 
-Isso irá baixar automaticamente para `mediapipe/models/`:
-- `pose_landmarker_full.task` — Detecção de landmarks corporais (ombros, pescoço)
-- `selfie_segmenter.tflite` — Segmentação de pessoa para modo privacidade
+Isso irá baixar automaticamente os modelos para a pasta `src/models/`.
 
----
-
-## Como rodar
-
-### Usando o script (recomendado)
-
-```bash
-chmod +x scripts/run_mediapipe.sh
-
-# Rodar com CPU (padrão — compatível com todos os sistemas)
-./scripts/run_mediapipe.sh
-
-# Rodar com GPU (Linux com OpenGL ES — mais rápido)
-./scripts/run_mediapipe.sh mediapipe --gpu
-
-# Especificar nome do ambiente conda + modo de processamento
-./scripts/run_mediapipe.sh <nome_do_ambiente> [--cpu|--gpu]
-```
-
-### Rodando diretamente com Python
+### 4. Como rodar do código-fonte
 
 ```bash
 conda activate mediapipe
-cd mediapipe/
+cd src/
 
 # CPU (padrão)
-python3 main.py
+python main.py
 
-# GPU (Linux)
-python3 main.py --gpu
+# GPU (Linux com OpenGL ES)
+python main.py --gpu
 ```
 
 ---

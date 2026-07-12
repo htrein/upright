@@ -15,10 +15,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# PyInstaller / Build
+# PyInstaller / Build (artefatos intermediários e executáveis)
+# Executáveis são distribuídos via GitHub Releases (acima de 100 MB)
 dist/
 build/
 build_pyinstaller/
-*.spec
 *.log
-

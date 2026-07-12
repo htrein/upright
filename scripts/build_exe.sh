@@ -76,7 +76,6 @@ cd "$ROOT_DIR"
 
 python -m PyInstaller \
     --noconfirm \
-    --onefile \
     --distpath "$DIST_DIR" \
     --workpath "$BUILD_DIR" \
     src/main.spec

@@ -131,11 +131,11 @@ echo [4/4] Build concluido!
 echo.
 echo =======================================================
 echo   Executavel Windows gerado em: %DIST_DIR%\
-echo   Arquivo: %DIST_DIR%\main.exe
+echo   Arquivo: %DIST_DIR%\upright.exe
 echo =======================================================
 echo.
 echo   Como rodar:
-echo     %DIST_DIR%\main.exe
+echo     %DIST_DIR%\upright.exe
 echo.
 echo   Para distribuir, compacte a pasta:
 echo     Clique com botao direito em dist\windows ^> Enviar para ^> Pasta compactada

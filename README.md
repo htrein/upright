@@ -60,11 +60,11 @@ A forma mais fácil de usar o Upright é baixando o executável pronto. **Você 
 
 1. Acesse a página de **[Releases](https://github.com/htrein/upright/releases)** do projeto.
 2. Baixe o arquivo correspondente ao seu sistema:
-   - **Windows:** Baixe o arquivo `main.exe` (ou `upright-windows.exe`).
-   - **Linux:** Baixe o arquivo `main` (sem extensão, ou `upright-linux`).
+   - **Windows:** Baixe a pasta compactada ou instalador contendo `upright.exe`.
+   - **Linux:** Baixe a pasta compactada contendo o executável `upright` (sem extensão).
 3. **Execute o aplicativo:**
-   - **No Windows:** Basta dar dois cliques no `.exe` baixado.
-   - **No Linux:** Abra o terminal na pasta onde baixou e dê permissão de execução: `chmod +x main`, em seguida rode com `./main`.
+   - **No Windows:** Basta dar dois cliques no `upright.exe` baixado.
+   - **No Linux:** Abra o terminal na pasta onde baixou e dê permissão de execução: `chmod +x upright`, em seguida rode com `./upright`.
 
 > **Nota:** Na primeira vez que rodar, o aplicativo criará automaticamente um banco de dados local (`posture_history.db`) na mesma pasta onde o executável está localizado. Mantenha-o em uma pasta fixa (ex: Documentos ou Área de Trabalho).
 
@@ -193,7 +193,7 @@ O executável será gerado em: `dist/upright`
 ### Avisos importantes sobre executáveis
 
 - O executável gerado é **específico para o sistema operacional** onde foi buildado. Um executável Linux **não roda** no Windows e vice-versa.
-- O arquivo `posture_history.db` (banco de dados) e a pasta `models/` são lidos/criados **no mesmo diretório de onde o executável for executado**.
+- O arquivo de banco de dados (`posture_history.db`) e o relatório (`report.html`) serão criados **na mesma pasta de onde o aplicativo for executado**. Os modelos de IA já estão embutidos (você não precisa enviar a pasta `models/`).
 - Para distribuir para outros sistemas, o build precisa ser feito naquele sistema.
 
 | SO Alvo | Como gerar |

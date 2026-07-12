@@ -84,29 +84,42 @@ def get_data(user_id=None, username="Todos"):
         try:
             with open(csv_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
-                total_duration, total_emissions, total_energy = 0.0, 0.0, 0.0
+                total_duration = 0.0
+                total_cpu_energy = 0.0
+                total_ram_energy = 0.0
+                row_count = 0
                 for row in reader:
                     if username != "Todos":
                         if row.get('project_name') != f"upright_{username}":
                             continue
-                    total_duration  += float(row.get('duration', 0))
-                    total_emissions += float(row.get('emissions', 0))
-                    total_energy    += float(row.get('energy_consumed', 0))
-                
-                # mg de CO2, Wh de energia)
-                emissions_mg = total_emissions * 1_000_000
-                energy_wh = total_energy * 1000
+                    total_duration   += float(row.get('duration', 0))
+                    # Usa apenas CPU + RAM — a GPU é capturada em modo processo
+                    # como consumo total da placa (ocioso + carga), inflando muito o valor.
+                    total_cpu_energy += float(row.get('cpu_energy', 0))
+                    total_ram_energy += float(row.get('ram_energy', 0))
+                    row_count += 1
 
-                # Carregar um smartphone = ~15 Wh (média moderna)
-                smartphones = energy_wh / 15.0
-                
-                carbon_data = {
-                    'emissions_mg': round(emissions_mg, 2),
-                    'energy_wh': round(energy_wh, 2),
-                    'smartphones': round(smartphones, 1)
-                }
+                if row_count > 0:
+                    # cpu_energy e ram_energy já estão em kWh
+                    total_energy_kwh = total_cpu_energy + total_ram_energy
+                    energy_wh = total_energy_kwh * 1000
+
+                    # Emissões estimadas: média BRA = ~0.075 kg CO2/kWh (SIN 2024)
+                    BRAZIL_EMISSION_FACTOR = 0.075  # kg CO2 / kWh
+                    emissions_kg = total_energy_kwh * BRAZIL_EMISSION_FACTOR
+                    emissions_mg = emissions_kg * 1_000_000
+
+                    # Carregar um smartphone = ~15 Wh (média moderna)
+                    smartphones = energy_wh / 15.0
+
+                    carbon_data = {
+                        'emissions_mg': round(emissions_mg, 2),
+                        'energy_wh':    round(energy_wh, 4),
+                        'smartphones':  round(smartphones, 3)
+                    }
         except Exception as e:
             print(f"Erro lendo emissions.csv: {e}")
+
 
     return {
         'total_sessions': len(sessions),

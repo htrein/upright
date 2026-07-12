@@ -17,9 +17,10 @@ set -euo pipefail
 ENV_NAME="${1:-mediapipe}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-MEDIAPIPE_DIR="$ROOT_DIR/mediapipe"
-DIST_DIR="$ROOT_DIR/dist"
-BUILD_DIR="$ROOT_DIR/build_pyinstaller"
+SOURCE_DIR="$ROOT_DIR/src"
+MEDIAPIPE_DIR="$SOURCE_DIR"
+DIST_DIR="$ROOT_DIR/dist/linux"
+BUILD_DIR="$ROOT_DIR/build_pyinstaller/linux"
 
 echo "============================================="
 echo "  Upright — Build de Executável (Linux)"
@@ -68,32 +69,30 @@ echo "      PyInstaller $(python -c 'import PyInstaller; print(PyInstaller.__ver
 echo ""
 echo "[3/4] Executando PyInstaller (isso pode levar alguns minutos)..."
 
-# WORKAROUND: A pasta do projeto se chama "mediapipe", o que causa um conflito de nome
-# (name collision) com a biblioteca do python quando o PyInstaller tenta analisar.
-# Nós renomeamos temporariamente a pasta para 'src' para evitar o erro.
+mkdir -p "$DIST_DIR" "$BUILD_DIR"
+
+# A pasta de origem já está em src, então usamos o spec direto.
 cd "$ROOT_DIR"
-mv mediapipe src
 
 python -m PyInstaller \
     --noconfirm \
+    --onefile \
     --distpath "$DIST_DIR" \
     --workpath "$BUILD_DIR" \
-    src/upright.spec
-
-# Restaura o nome original
-mv src mediapipe
+    src/main.spec
 
 # ── 4. Resultado ──────────────────────────────────────────────────────────────
 echo ""
 echo "[4/4] Build concluído!"
 echo ""
 echo "======================================================="
-echo "  Executável gerado em: $DIST_DIR/upright/"
+echo "  Executável Linux gerado em: $DIST_DIR/"
+echo "  Arquivo: $DIST_DIR/upright"
 echo "======================================================="
 echo ""
 echo "  Como rodar:"
-echo "    $DIST_DIR/upright/upright"
-echo "    $DIST_DIR/upright/upright --gpu   (se GPU disponível)"
+echo "    $DIST_DIR/upright"
+echo "    $DIST_DIR/upright --gpu   (se GPU disponível)"
 echo ""
 echo "  Para distribuir, compacte a pasta:"
 echo "    tar -czf upright-linux.tar.gz -C $DIST_DIR upright"

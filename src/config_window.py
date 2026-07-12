@@ -211,11 +211,23 @@ def show_config_window():
     btns.pack(fill="x")
 
     def open_report():
-        import generate_report as gr
-        data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
-        path = gr.generate_html(data, config.CURRENT_USERNAME if config.CURRENT_USERNAME else 'Todos')
-        from pathlib import Path
-        webbrowser.open(Path(path).resolve().as_uri())
+        try:
+            import generate_report as gr
+            data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
+            if data is None:
+                import tkinter.messagebox as mb
+                mb.showwarning("Sem Dados", "Nenhuma sessão encontrada para gerar o relatório.\nInicie uma sessão de monitoramento primeiro.")
+                return
+            path = gr.generate_html(data, config.CURRENT_USERNAME if config.CURRENT_USERNAME else 'Todos')
+            import sys as _sys, os as _os
+            if _sys.platform == 'win32':
+                _os.startfile(path)
+            else:
+                from pathlib import Path
+                webbrowser.open(Path(path).resolve().as_uri())
+        except Exception as e:
+            import tkinter.messagebox as mb
+            mb.showerror("Erro no Relatório", f"Não foi possível gerar o relatório:\n{e}")
         
     def delete_account():
         win = ctk.CTkToplevel(root)

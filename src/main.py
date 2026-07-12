@@ -15,13 +15,24 @@ import hud
 try:
     from codecarbon import OfflineEmissionsTracker as _ETracker
     _HAS_CARBON = True
-except ImportError:
+except Exception:
     _HAS_CARBON = False
+    _ETracker = None
 import time
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
+
+def _ensure_stdio():
+    if sys.stdout is None:
+        sys.stdout = sys.__stdout__ or open(os.devnull, 'w')
+    if sys.stderr is None:
+        sys.stderr = sys.__stderr__ or open(os.devnull, 'w')
+
+
 def main():
+    _ensure_stdio()
+
     # Resolve diretórios para modo normal e PyInstaller
     if getattr(sys, 'frozen', False):
         MODELS_DIR = sys._MEIPASS
@@ -376,14 +387,22 @@ def main():
                 elif key == 32: 
                     config.IS_PAUSED = not config.IS_PAUSED
                 elif key == ord('r'):
-                    import generate_report as gr, webbrowser, threading
+                    import generate_report as gr, threading
                     def _open_report():
-                        data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
-                        path = gr.generate_html(data, config.CURRENT_USERNAME)
-                        print(f"Relatorio gerado: {path}")
-                        # pathlib garante URL correta em todos os SOs (file:///C:/... no Windows)
-                        from pathlib import Path
-                        webbrowser.open(Path(path).resolve().as_uri())
+                        try:
+                            data = gr.get_data(config.CURRENT_USER_ID, config.CURRENT_USERNAME)
+                            if data is None:
+                                return
+                            path = gr.generate_html(data, config.CURRENT_USERNAME)
+                            print(f"Relatorio gerado: {path}")
+                            if sys.platform == 'win32':
+                                os.startfile(path)
+                            else:
+                                from pathlib import Path
+                                import webbrowser
+                                webbrowser.open(Path(path).resolve().as_uri())
+                        except Exception as e:
+                            print(f"Erro ao gerar relatorio: {e}")
                     threading.Thread(target=_open_report, daemon=True).start()
                 elif key == ord('f'):
                     current = config.get_ema('is_fullscreen', 1.0)

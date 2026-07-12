@@ -19,9 +19,10 @@ if "%~1"=="" (set ENV_NAME=mediapipe) else (set ENV_NAME=%~1)
 
 set SCRIPT_DIR=%~dp0
 set ROOT_DIR=%SCRIPT_DIR%..
-set MEDIAPIPE_DIR=%ROOT_DIR%\mediapipe
-set DIST_DIR=%ROOT_DIR%\dist
-set BUILD_DIR=%ROOT_DIR%\build_pyinstaller
+set SOURCE_DIR=%ROOT_DIR%\src
+set MEDIAPIPE_DIR=%SOURCE_DIR%
+set DIST_DIR=%ROOT_DIR%\dist\windows
+set BUILD_DIR=%ROOT_DIR%\build_pyinstaller\windows
 
 echo.
 echo =============================================
@@ -72,8 +73,14 @@ exit /b 2
 :found_conda
 echo       conda encontrado em: %CONDA_EXE%
 
+:: Extrai o diretório do conda
+for %%I in ("%CONDA_EXE%") do (
+    set CONDA_BIN_DIR=%%~dpI
+)
+set ACTIVATE_SCRIPT=%CONDA_BIN_DIR%activate.bat
+
 :: Inicializa o conda para uso no script batch
-call "%CONDA_EXE%" activate %ENV_NAME% 2>nul
+call "%ACTIVATE_SCRIPT%" %ENV_NAME%
 if errorlevel 1 (
     echo ERRO: Ambiente conda '%ENV_NAME%' nao encontrado.
     echo       Crie-o com: conda env create -f environment-mediapipe.yml
@@ -98,22 +105,19 @@ for /f "tokens=*" %%V in ('python -c "import PyInstaller; print(PyInstaller.__ve
 echo.
 echo [3/4] Executando PyInstaller ^(isso pode levar alguns minutos^)...
 
-:: WORKAROUND: A pasta do projeto se chama "mediapipe", o que causa um conflito de nome
-:: (name collision) com a biblioteca do python quando o PyInstaller tenta analisar.
-:: Nos renomeamos temporariamente a pasta para 'src' para evitar o erro.
+if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
+if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+
+:: A pasta de origem já está em src, então usamos o spec direto.
 cd /d "%ROOT_DIR%"
-ren mediapipe src
 
 python -m PyInstaller ^
     --noconfirm ^
     --distpath "%DIST_DIR%" ^
     --workpath "%BUILD_DIR%" ^
-    src\upright.spec
+    src\main.spec
 
 set BUILD_ERRORLEVEL=%errorlevel%
-
-:: Restaura o nome original
-ren src mediapipe
 
 if %BUILD_ERRORLEVEL% neq 0 (
     echo.
@@ -126,14 +130,15 @@ echo.
 echo [4/4] Build concluido!
 echo.
 echo =======================================================
-echo   Executavel gerado em: %DIST_DIR%\upright\
+echo   Executavel Windows gerado em: %DIST_DIR%\
+echo   Arquivo: %DIST_DIR%\main.exe
 echo =======================================================
 echo.
 echo   Como rodar:
-echo     %DIST_DIR%\upright\upright.exe
+echo     %DIST_DIR%\main.exe
 echo.
 echo   Para distribuir, compacte a pasta:
-echo     Clique com botao direito em dist\upright ^> Enviar para ^> Pasta compactada
+echo     Clique com botao direito em dist\windows ^> Enviar para ^> Pasta compactada
 echo     (ou use 7-Zip / WinRAR)
 echo.
 echo   ATENCAO: posture_history.db e report.html sao criados
